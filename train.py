@@ -16,3 +16,13 @@ if __name__ == '__main__':
   split = int(0.9 * len(data)) # first part of the data will be train then rest of it will be validation
   trainData = data[:split]
   valData = data[split:]
+
+  # train in chunks for efficiency
+  batchSize = 4 # independent chunks to process in parallel (GPU efficient)
+  # context-target based chunk training: the chunk contains information for every element in the chunk
+  # that element can act as a target and everything preceding can act as the context. So it contains each
+  # elemtent's positional information (context (as low as one characater) -> target)
+  # Allow the model to see many different context sizes
+  blockSize = 8 # maximum context length (chunk length) (that the model will be used to)
+
+  torch.manual_seed(1337) # set seed for consistency
