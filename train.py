@@ -75,12 +75,12 @@ if __name__ == '__main__':
     # zero out gradients from previous epoch
     optimizer.zero_grad(set_to_none=True)
 
-    # forward pass: evaluate the logits (prediction scores) and the loss
+    # forward pass: evaluate the logits (prediction scores) and the loss (want to minimize this)
     logits, loss = model(xBatch, yBatch)
 
     # backward step
-    loss.backward() # calculate back propagation (gradients from all the parameters)
-    optimizer.step() # optimization step: update parameters using the gradients from previous step
+    loss.backward() # calculate back propagation (gradients (derivative of loss function wrt parameter) for all the parameters)
+    optimizer.step() # step (optimize parameters) towards negative of gradient (calculated in the previous step) scaled with learning rate
 
   # generate from the model
   context = torch.zeros((1, 1), dtype=torch.long, device=device) # feed the new line character "\n" (0) as the starting sequence/context
