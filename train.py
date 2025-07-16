@@ -12,19 +12,24 @@ def getBatch(type):
   x, y = x.to(device), y.to(device)
   return x, y
 
-@torch.no_grad()
+# estimate loss through average over multiple batches to reduce noise (batch dependent) (more accurate)
+@torch.no_grad() # not call backward step (for pytorch efficiency)
 def estimateLoss():
-  out = {}
-  model.eval()
+  lossEstimates = {}
+  # eval = train (no dropout batchnorm layers) in the bigram model so it does nothing
+  model.eval() # switch to eval mode (bc some layers wil behave differently ex. dropout batchnorm layers)
+  # for both splits
   for split in ['train', 'val']:
-    losses = torch.zeros(evalIters)
-    for k in range(evalIters):
+    losses = torch.zeros(estimateIters) # to store all losses from estimateIters iterations
+    # average out the loss over multiple batches (estimateIters batches)
+    for k in range(estimateIters):
       X, Y = getBatch(split)
       logits, loss = model(X, Y)
-      losses[k] = loss.item()
-    out[split] = losses.mean()
-  model.train()
-  return out
+      losses[k] = loss.item() # store the loss
+    lossEstimates[split] = losses.mean() # average out estimateIters iterations of losses
+  # eval = train (no dropout batchnorm layers) in the bigram model so it does nothing
+  model.train() # switch to train mode (bc some layers wil behave differently ex. dropout batchnorm layers)
+  return lossEstimates 
 
 if __name__ == '__main__':
   torch.manual_seed(1337) # set seed for consistency
@@ -41,7 +46,7 @@ if __name__ == '__main__':
   printInterval = 100
   learningRate = 1e-3
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-  evalIters = 200
+  estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   maxNewTokens = 500
 
   # read in the file (1,000,000 characters)
@@ -49,7 +54,6 @@ if __name__ == '__main__':
     text = file.read()
 
   lm = LanguageModel(text)
-  lm.showChars()
 
   # encode the entire text data and store it into a torch tensor (multi-dimensional array in pytorch)
   data = torch.tensor(lm.encode(text), dtype=torch.long)
