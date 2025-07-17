@@ -76,13 +76,12 @@ if __name__ == '__main__':
 
     # get batches of data
     xBatch, yBatch = getBatch('train')
-    # zero out gradients from previous epoch
-    optimizer.zero_grad(set_to_none=True)
 
     # forward pass: evaluate the logits (prediction scores) and the loss (want to minimize this)
     logits, loss = model(xBatch, yBatch)
-
+    
     # backward step
+    optimizer.zero_grad(set_to_none=True) # zero out gradients from previous epoch
     loss.backward() # calculate back propagation (gradients (derivative of loss function wrt parameter) for all the parameters)
     optimizer.step() # step (optimize parameters) towards negative of gradient (calculated in the previous step) scaled with learning rate
 
