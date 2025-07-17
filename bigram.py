@@ -8,7 +8,6 @@ class BigramModel(nn.Module):
   A class used to represent a Bigram Language Model
   (predicts the probablilty of a sequence of tokens by considering the preceding token for each token: P(token | preceding token))
   """
-  tokenEmbeddingTable = None
 
   def __init__(self, vocabSize):
     super().__init__()
@@ -54,12 +53,12 @@ class BigramModel(nn.Module):
     # generate batchSize next tokens in parallel for maxNewTokens tokens
     for _ in range(maxNewTokens):
       # get the predictions in the form of logits
-      logits, loss = self(contexts) # call the forward function
+      logits, loss = self(seq) # call the forward function
       # get the most recent (last time step) token for all batches (WILL FIX: not ideal to only look at last token)
       lastLogits = logits[:, -1, :] # (B, 1, C)
       # convert the logits into probabilities using softmax (logits for each C -> probability distribution of length C)
       probs = F.softmax(lastLogits, dim=-1) # (B, 1, C)
       # sample from the probability distribution (of length C) so we have a sampled next token for each batch
-      nextTokens = torch.multinomial(probs, numSamples=1) # (B, 1)
+      nextTokens = torch.multinomial(probs, num_samples=1) # (B, 1)
       seq = torch.cat((seq, nextTokens), dim=1) # append the next token to the running sequence (B, T+1)
     return seq # (B, T + maxNewTokens)

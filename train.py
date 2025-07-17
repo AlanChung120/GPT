@@ -43,8 +43,8 @@ if __name__ == '__main__':
   # Allow the model to see many different context sizes
   blockSize = 8 # maximum context length (chunk length) (that the model will be used to)
   epochs = 3000
-  printInterval = 100
-  learningRate = 1e-3
+  printInterval = 300
+  learningRate = 1e-2
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   maxNewTokens = 500
@@ -70,7 +70,7 @@ if __name__ == '__main__':
   for epoch in range(epochs):
     
     # every printInterval we print out the losses on train and validation sets
-    if epoch % printInterval == 0:
+    if (epoch + 1) % printInterval == 0:
       losses = estimateLoss()
       print(f'epoch {epoch + 1}/{epochs}, train loss={losses['train'].item():.4f}, val loss={losses['val']:.4f}')
 
