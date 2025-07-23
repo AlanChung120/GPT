@@ -45,6 +45,21 @@ class BigramModel(nn.Module):
       # the correct target token should have a very high number under logits
       loss = F.cross_entropy(logits, targets)
 
+      # self-attention (communicate between all preceding tokens)
+      x = torch.randn(B, T, C) # each token has some C-length vector storing information
+      xbow = torch.zeros((B, T, C)) # x bag of words: averaging up word/token stored in T locations (counting frequency)
+      for b in range(B): # go through all the batches
+        for t in range(T): # go through all the timeline
+          xprev = x[b, :t+1] # at this batch and current token and every token that precedes it with vocabSize information on each token (t, C)
+          xbow[b, t] = torch.mean(xprev, 0) # average out t C-length vectors (component wise) and store the C-length vector under this batch and current timeline/token (t)
+
+      # or
+      a = torch.tril(torch.ones(3, 3)) # 3 by 3 lower triangular 1s matrix
+      a = a / torch.sum(a, 1, keepdim=1) # scale it so that all the rows in a add up to one (lower triangular average matrix) (divide each element by its row sum)
+      b = torch.randint(0, 10, (3, 2)).float() # 3 by 2 random (from 0 to 10) matrix
+      c = a @ b # matrix multiplication by a does the above self-attention calculation: for a batch for each column (c) i-th (t) row is the vertical average up to i-th row (t)
+      # so a batch will have a matrix c which is a T by C matrix where for each component/column c the row t is the vertical average of the component/column values up to the row t
+
     return logits, loss
   
   # generate maxNewTokens tokens given context tokens contexts (B, T)
