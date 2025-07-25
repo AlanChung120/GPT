@@ -54,11 +54,27 @@ class BigramModel(nn.Module):
           xbow[b, t] = torch.mean(xprev, 0) # average out t C-length vectors (component wise) and store the C-length vector under this batch and current timeline/token (t)
 
       # or
-      a = torch.tril(torch.ones(3, 3)) # 3 by 3 lower triangular 1s matrix
-      a = a / torch.sum(a, 1, keepdim=1) # scale it so that all the rows in a add up to one (lower triangular average matrix) (divide each element by its row sum)
-      b = torch.randint(0, 10, (3, 2)).float() # 3 by 2 random (from 0 to 10) matrix
-      c = a @ b # matrix multiplication by a does the above self-attention calculation: for a batch for each column (c) i-th (t) row is the vertical average up to i-th row (t)
-      # so a batch will have a matrix c which is a T by C matrix where for each component/column c the row t is the vertical average of the component/column values up to the row t
+      # T by T lower triangular 1s matrix
+      avgWeightMatrix = torch.tril(torch.ones(T, T))
+      # scale it so that all the rows in avgWeightMatrix add up to one (lower triangular average matrix) (divide each element by its row sum)
+      avgWeightMatrix = avgWeightMatrix / avgWeightMatrix.sum(1, keepdim=1)
+      # matrix multiplication by avgWeightMatrix does the above self-attention calculation: for a batch for each column (c) t-th row is the vertical average up to t-th row
+      xbow2 = avgWeightMatrix @ x # (B (B copies of avgWeightMatrix automatically added), T, T) @ (B, T, C) -> (B, T, C) (evaluate all batches in paraellel)
+      # so a batch will have a T by C matrix where for each component/column c the row t is the vertical average of the component/column values up to the row t
+      torch.allclose(xbow, xbow2) # true
+
+      # or
+      # T by T lower triangular 1s matrix
+      tril = torch.tril(torch.ones(T, T))
+      # T by T zero matrix (0s represents how many tokens from the past are we averaging up (aggregation))
+      avgWeightMatrix = torch.zeros((T, T))
+      # Filter upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
+      avgWeightMatrix = avgWeightMatrix.masked_fill(tril == 0, float('-inf')) # lower triangular 0s and upper triangular -inf
+      # softmax (normalization operation) each row (exponentiate (0 -> 1, -inf -> 0) all the entries and divide by the sum of its row of exponentiated entries)
+      avgWeightMatrix = F.softmax(avgWeightMatrix, dim=-1)
+      # avgWeightMatrix is the same matrix as above
+      xbow3 = avgWeightMatrix @ x  # (B (B copies of avgWeightMatrix automatically added), T, T) @ (B, T, C) -> (B, T, C)
+      torch.allclose(xbow, xbow3) # true
 
     return logits, loss
   
