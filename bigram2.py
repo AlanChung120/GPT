@@ -19,7 +19,8 @@ class BigramModel(nn.Module):
     self.tokenEmbeddingTable = nn.Embedding(vocabSize, nEmbed) # (vocabSize, C) encode token identity
     # object representing a look up table of blockSize by nEmbed that stores the nEmbed logits for all possible token positions
     self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (T, C) encode token position
-    self.lmHead = nn.Linear(nEmbed, vocabSize) # language modelling head (C, vocabSize) turn nEmbed dimension back to vocabSize dimension (vocabSize possible next tokens)
+    # language modelling head (C, vocabSize) linear module to turn nEmbed dimension back to vocabSize dimension (vocabSize possible next tokens)
+    self.lmHead = nn.Linear(nEmbed, vocabSize) # (C, vocabSize)
 
   # forward function is implicitly called when the instance (object) is called directly
   # forward pass/evaluation of the model -> contexts is the input, targets is the target output
@@ -41,6 +42,31 @@ class BigramModel(nn.Module):
     x = tokenEmbedding + positionEmbedding # (B, T, C) + (B (B copies of positionEmbedding automatically added), T, C) = (B, T, C)
     # convert C=nEmbed dimension back to vocabSize dimension to get the logits for all possible next tokens
     logits = self.lmHead(x) # (B, T, C) -> (B, T, vocabSize)
+
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # single head self-attention
+    # instead of weighted aggregation we implement a data depenedent affinity matrix
+    # each token has a query vector (what I am looking for) and a key vector (what I contain)
+    # affinity of token x with token y (y precedes x) = dot product between query vector of x with key vector of y (higher the dot product, higher the affinity, higher the weight (relative))
+    C = 32
+    headSize = 16 # size of the key/query vectors
+    key = nn.Linear(C, headSize, bias=False) # Linear module (C, headSize) for the key vector (no bias = matrix multiply with some fixed weights)
+    query = nn.Linear(C, headSize, bias=False) # Linear module (C, headSize) for the query vector (no bias = matrix multiply with some fixed weights)
+    # Produce key and query vector in paraellel (no communication between tokens)
+    k = key(x) # key vector for all tokens (B, T, C) -> (B, T, headSize)
+    q = query(x) # query vector for all tokens (B, T, C) -> (B, T, headSize)
+    # Dot product between query vector and key vector for all tokens is the new weight matrix (affinities between two tokens for all possible pairs of tokens)
+    weightMatrix = q @ k.transpose(-2, -1) # transpose last two dimensions: (B, T, headSize) @ (B, headSize, T) -> (B, T, T) B T by T matrices
+    # T by T lower triangular 1s matrix
+    tril = torch.tril(torch.ones(T, T))
+    # Filter upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
+    weightMatrix = weightMatrix.masked_fill(tril == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
+    # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
+    weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1
+    out = weightMatrix @ x  # (B, T, T) @ (B, T, C) -> (B, T, C)
+
+
+    #------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     if targets is None:
       loss = None # no loss if targets is unavailable
