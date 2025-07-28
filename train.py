@@ -48,6 +48,7 @@ if __name__ == '__main__':
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   maxNewTokens = 500
+  nEmbed = 32
 
   # read in the file (1,000,000 characters)
   with open('input.txt', 'r', encoding='utf-8') as file:
