@@ -1,6 +1,6 @@
 import torch
 from languageModel import LanguageModel
-from bigram import BigramModel
+from bigram2 import BigramModel
 
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
@@ -24,7 +24,7 @@ def estimateLoss():
     # average out the loss over multiple batches (estimateIters batches)
     for k in range(estimateIters):
       X, Y = getBatch(split)
-      logits, loss = model(X, Y)
+      logits, loss = model(X, Y, device)
       losses[k] = loss.item() # store the loss
     lossEstimates[split] = losses.mean() # average out estimateIters iterations of losses
   # eval = train (no dropout batchnorm layers) in the bigram model so it does nothing
@@ -48,7 +48,7 @@ if __name__ == '__main__':
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   maxNewTokens = 500
-  nEmbed = 32
+  nEmbed = 32 # embedding dimensions (intermediate step)
 
   # read in the file (1,000,000 characters)
   with open('input.txt', 'r', encoding='utf-8') as file:
@@ -64,7 +64,7 @@ if __name__ == '__main__':
   trainData = data[:split]
   valData = data[split:]
   
-  model = BigramModel(lm.vocabSize).to(device)
+  model = BigramModel(nEmbed, lm.vocabSize, blockSize).to(device)
   # optimizer: method of updating the parameters using the gradients, ADAM (adaptive learning rate)
   optimizer = torch.optim.AdamW(model.parameters(), lr=learningRate)
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     xBatch, yBatch = getBatch('train')
 
     # forward pass: evaluate the logits (prediction scores) and the loss (want to minimize this)
-    logits, loss = model(xBatch, yBatch)
+    logits, loss = model(xBatch, yBatch, device)
     
     # backward step
     optimizer.zero_grad(set_to_none=True) # zero out gradients from previous epoch

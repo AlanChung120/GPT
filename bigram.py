@@ -53,7 +53,7 @@ class BigramModel(nn.Module):
           xprev = x[b, :t+1] # at this batch and current token and every token that precedes it with vocabSize information on each token (t, C)
           xbow[b, t] = torch.mean(xprev, 0) # average out t C-length vectors (component wise) and store the C-length vector under this batch and current timeline/token (t)
 
-      # or aggregation method
+      # or weighted aggregation method
       # T by T lower triangular 1s matrix
       avgWeightMatrix = torch.tril(torch.ones(T, T))
       # scale it so that all the rows in avgWeightMatrix add up to one (lower triangular average matrix) (divide each element by its row sum)
@@ -67,7 +67,7 @@ class BigramModel(nn.Module):
       # T by T lower triangular 1s matrix
       tril = torch.tril(torch.ones(T, T))
       # T by T zero matrix (0s represents how many tokens from the past are we averaging up (aggregation))
-      avgWeightMatrix = torch.zeros((T, T)) # 0s represent affinities (how much preceding token affects the token) (not always 0 but will be data dependent)
+      avgWeightMatrix = torch.zeros((T, T)) # 0s represent affinities (how much preceding token affects/interests the token) (not always 0 but will be data dependent)
       # Filter upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
       avgWeightMatrix = avgWeightMatrix.masked_fill(tril == 0, float('-inf')) # lower triangular 0s and upper triangular -inf
       # softmax (normalization operation) each row (exponentiate (0 -> 1, -inf -> 0) all the entries and divide by the sum of its row of exponentiated entries)
@@ -76,7 +76,7 @@ class BigramModel(nn.Module):
       xbow3 = avgWeightMatrix @ x  # (B (B copies of avgWeightMatrix automatically added), T, T) @ (B, T, C) -> (B, T, C)
       torch.allclose(xbow, xbow3) # true
 
-      # self-attention summary: matrix multiply by a a lower triangular with lower triangular values representing affinities---------------------------------------------------
+      # self-attention summary (weighted aggregation): matrix multiply by a a lower triangular with lower triangular values representing affinities-------------------------
 
     return logits, loss
   
