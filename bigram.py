@@ -68,7 +68,7 @@ class BigramModel(nn.Module):
       tril = torch.tril(torch.ones(T, T))
       # T by T zero matrix (0s represents how many tokens from the past are we averaging up (aggregation))
       avgWeightMatrix = torch.zeros((T, T)) # 0s represent affinities (how much preceding token affects/interests the token) (will not be 0 but will be data/token dependent)
-      # Filter upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
+      # Filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
       avgWeightMatrix = avgWeightMatrix.masked_fill(tril == 0, float('-inf')) # lower triangular 0s and upper triangular -inf
       # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries and divide by the sum of its row of exponentiated entries)
       avgWeightMatrix = F.softmax(avgWeightMatrix, dim=-1)

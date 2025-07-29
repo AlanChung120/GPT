@@ -44,26 +44,31 @@ class BigramModel(nn.Module):
     logits = self.lmHead(x) # (B, T, C) -> (B, T, vocabSize)
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # single head self-attention
-    # instead of weighted aggregation we implement a data depenedent affinity matrix
-    # each token has a query vector (what I am looking for) and a key vector (what I contain)
-    # affinity of token x with token y (y precedes x) = dot product between query vector of x with key vector of y (higher the dot product, higher the affinity, higher the weight (relative))
+    # single head self-attention (communication between tokens)
+    # instead of equal weighted aggregation we implement a batch/data/token dependent affinity (how related, how much to aggregate/learn) matrix aggregation
+    # each token has a query vector (what I am looking for based on token identity and position) and a key vector (what I contain (token identity and position))
+    # affinity of token x with token y (y precedes x) = dot product between query vector of x with key vector of y
+    # if key and query vector match (key is what query is looking for) higher the dot product (same high components), higher the affinity, higher the weight (relative))
     C = 32
     headSize = 16 # size of the key/query vectors
+    # Arbitrary module to learn the weights to convert to appropriate vectors
     key = nn.Linear(C, headSize, bias=False) # Linear module (C, headSize) for the key vector (no bias = matrix multiply with some fixed weights)
     query = nn.Linear(C, headSize, bias=False) # Linear module (C, headSize) for the query vector (no bias = matrix multiply with some fixed weights)
+    value = nn.Linear(C, headSize, bias=False) # Linear module (C, headSize) for the value vector (no bias = matrix multiply with some fixed weights)
     # Produce key and query vector in paraellel (no communication between tokens)
-    k = key(x) # key vector for all tokens (B, T, C) -> (B, T, headSize)
-    q = query(x) # query vector for all tokens (B, T, C) -> (B, T, headSize)
+    k = key(x) # key vector for all tokens (B, T, C) -> (B, T, headSize) (headSize vector to store identity and position)
+    q = query(x) # query vector for all tokens (B, T, C) -> (B, T, headSize) (headSize vector to store what identity and position to look for)
     # Dot product between query vector and key vector for all tokens is the new weight matrix (affinities between two tokens for all possible pairs of tokens)
+    # entry (col, row): row-th query vector dot prodcut col-th key vector
     weightMatrix = q @ k.transpose(-2, -1) # transpose last two dimensions: (B, T, headSize) @ (B, headSize, T) -> (B, T, T) B T by T matrices
     # T by T lower triangular 1s matrix
     tril = torch.tril(torch.ones(T, T))
-    # Filter upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
+    # Filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
     weightMatrix = weightMatrix.masked_fill(tril == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
     # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
-    weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1
-    out = weightMatrix @ x  # (B, T, T) @ (B, T, C) -> (B, T, C)
+    weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence)
+    v = value(x) # value vector for all tokens (B, T, C) -> (B, T, headSize) (headSize vector for all tokens that store what private x stores (position and identity))
+    out = weightMatrix @ v  # (B, T, T) @ (B, T, headSize) -> (B, T, headSize) (for a single head)
 
 
     #------------------------------------------------------------------------------------------------------------------------------------------------------------
