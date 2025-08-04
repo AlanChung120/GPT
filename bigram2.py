@@ -44,7 +44,7 @@ class BigramModel(nn.Module):
     logits = self.lmHead(x) # (B, T, C) -> (B, T, vocabSize)
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # single head self-attention (communication between tokens)
+    # single head self-attention (communication between tokens) (self because keys and values all come from the same source as queries (x) otherwise it is cross-attention)
     # instead of equal weighted aggregation we implement a batch/data/token dependent affinity (how related, how much to aggregate/learn) matrix aggregation
     # each token has a query vector (what I am looking for based on token identity and position) and a key vector (what I contain (token identity and position))
     # affinity of token x with token y (y precedes x) = dot product between query vector of x with key vector of y
@@ -64,6 +64,7 @@ class BigramModel(nn.Module):
     # T by T lower triangular 1s matrix
     tril = torch.tril(torch.ones(T, T))
     # Filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
+    # decoder block: use of triangular masking (tokens from the future is not considered), encoder block would delete this line
     weightMatrix = weightMatrix.masked_fill(tril == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
     # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
     weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence)

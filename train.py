@@ -50,7 +50,7 @@ if __name__ == '__main__':
   maxNewTokens = 500
   nEmbed = 32 # embedding dimensions (intermediate step)
 
-  # read in the file (1,000,000 characters)
+  # read in the file (1,000,000 characters) can change
   with open('input.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
