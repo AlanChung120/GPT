@@ -42,8 +42,8 @@ if __name__ == '__main__':
   # element's positional information (context (as low as one characater) -> target)
   # Allow the model to see many different context sizes
   blockSize = 8 # maximum context length (chunk length) (that the model will be used to)
-  epochs = 3000
-  printInterval = 300
+  epochs = 5000
+  printInterval = 500
   learningRate = 1e-3
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from attentionHead import MultiHeadAttention
+from feedForward import FeedForward
 torch.manual_seed(1337) # set seed for consistency
 
 class BigramModel(nn.Module):
@@ -20,9 +21,11 @@ class BigramModel(nn.Module):
     self.tokenEmbeddingTable = nn.Embedding(vocabSize, nEmbed) # (vocabSize, C) encode token identity
     # object representing a look up table of blockSize by nEmbed that stores the nEmbed logits for all possible token positions
     self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (T, C) encode token position
-    # 4 heads of  self-attention model to apply one head of self-attention 
+    # numHeads heads of self-attention model to apply multiple parallel one head of self-attentions 
     self.saHeads = MultiHeadAttention(numHeads, headSize // numHeads, nEmbed, blockSize) # (B, T, headSize)
-    # language modelling head (C, vocabSize) linear module to turn headSize dimension back to vocabSize dimension (vocabSize possible next tokens)
+    # a simple feed forward network
+    self.feedForward = FeedForward(nEmbed) # results are same dimensions
+    # language modelling head (C, vocabSize) linear module (decoder) to turn headSize dimension back to vocabSize dimension (vocabSize possible next tokens)
     self.lmHead = nn.Linear(headSize, vocabSize) # (C, vocabSize)
 
   # forward function is implicitly called when the instance (object) is called directly
@@ -45,6 +48,8 @@ class BigramModel(nn.Module):
     x = tokenEmbedding + positionEmbedding # (B, T, C) + (B (B copies of positionEmbedding automatically added), T, C) = (B, T, C)
     # apply multiple heads of self-attention 
     x = self.saHeads(x) # (B, T, C) -> (B, T, headSize)
+    # apply a feed forward network
+    x = self.feedForward(x) # (B, T, headSize) -> (B, T, headSize)
     # convert headSize (which is C and nEmbed in most cases) dimension back to vocabSize dimension to get the logits for all possible next tokens
     logits = self.lmHead(x) # (B, T, headSize) -> (B, T, vocabSize)
 
@@ -70,7 +75,7 @@ class BigramModel(nn.Module):
     seq = contexts # initialize the sequence of tokens with the current context
     # generate batchSize next tokens in parallel for maxNewTokens tokens
     for _ in range(maxNewTokens):
-      # get last blockSize tokens from seq
+      # crop seq to get last blockSize tokens for the positionEmbeddingTable (otherwise it will run out of scope; it only has embeddings for blockSize)
       seqBlock = seq[:, -blockSize:] # (B, blockSize, vocabSize)
       # get the predictions in the form of logits
       logits, loss = self(seqBlock) # call the forward function

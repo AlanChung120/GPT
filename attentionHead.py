@@ -25,7 +25,7 @@ class AttentionHead(nn.Module):
     self.key = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the key vector (no bias = matrix multiply with some fixed weights)
     self.query = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the query vector (no bias = matrix multiply with some fixed weights)
     self.value = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the value vector (no bias = matrix multiply with some fixed weights)
-    # register buffer a T by T lower triangular 1s matrix
+    # register buffer (not a parameter) a T by T lower triangular 1s matrix (tril)
     self.register_buffer('tril', torch.tril(torch.ones(blockSize, blockSize)))
   
   # Forward pass of a singular head of self-attention (B, T, C) -> (B, T, headSize) 
@@ -43,8 +43,8 @@ class AttentionHead(nn.Module):
 
     # Dot product between query vector and key vector for all tokens is the new weight matrix (affinities between two tokens for all possible pairs of tokens)
     # entry (col, row): row-th query vector dot prodcut col-th key vector
-    # scaled attention divides weightMatrix by sqrt(headSize) which will scale weightMatrix variance to query and key variance 
-    # which then the softmax will stay diffuse and not saturate too much to the extreme
+    # scaled attention divides weightMatrix by sqrt(headSize) which will scale weightMatrix variance to query and key variance (control the variance)
+    # which then the softmax will stay diffuse and not saturate too much to the extreme (converge to one hot vector)
     weightMatrix = q @ k.transpose(-2, -1) * headSize**-0.5 # transpose last two dimensions: (B, T, headSize) @ (B, headSize, T) -> (B, T, T) B T by T matrices
 
     # Filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
@@ -59,12 +59,15 @@ class AttentionHead(nn.Module):
   
 class MultiHeadAttention(nn.Module):
   """ 
-  A class used to represent a multiple heads of self-attention in parallel 
+  A class used to represent a multiple heads (communication channels) of self-attention in parallel (and concatenating the results)
+    muliple independent communication channels to allow many different types of communication (attention) between tokens (ex. consonants, vowels)
+    and decode them into the output
   """
   def __init__(self, numHeads, headSize, nEmbed, blockSize):
     super().__init__()
-    # multiple single head of self-attention
+    # multiple single head of self-attention in paraellel
     self.heads = nn.ModuleList((AttentionHead(headSize, nEmbed, blockSize)) for _ in range(numHeads)) 
   
   def forward(self, x):
-    return torch.cat([head(x) for head in self.heads], dim=1)
+    # run multiple single head of self-attention and concatenate the outputs over the channel dimension (C)
+    return torch.cat([head(x) for head in self.heads], dim=-1)
