@@ -1,6 +1,6 @@
 import torch
 from languageModel import LanguageModel
-from bigram2 import BigramModel
+from bigramV2 import BigramModel
 
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
@@ -44,11 +44,12 @@ if __name__ == '__main__':
   blockSize = 8 # maximum context length (chunk length) (that the model will be used to)
   epochs = 3000
   printInterval = 300
-  learningRate = 1e-2
+  learningRate = 1e-3
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   maxNewTokens = 500
   nEmbed = 32 # embedding dimensions (intermediate step)
+  attentionHeadSize = nEmbed # head size for one head of self-attention
 
   # read in the file (1,000,000 characters) can change
   with open('input.txt', 'r', encoding='utf-8') as file:
@@ -64,7 +65,7 @@ if __name__ == '__main__':
   trainData = data[:split]
   valData = data[split:]
   
-  model = BigramModel(nEmbed, lm.vocabSize, blockSize).to(device)
+  model = BigramModel(nEmbed, lm.vocabSize, blockSize, attentionHeadSize).to(device)
   # optimizer: method of updating the parameters using the gradients, ADAM (adaptive learning rate)
   optimizer = torch.optim.AdamW(model.parameters(), lr=learningRate)
 
@@ -88,4 +89,4 @@ if __name__ == '__main__':
 
   # generate from the model
   context = torch.zeros((1, 1), dtype=torch.long, device=device) # feed the new line character "\n" (0) as the starting sequence/context
-  print(lm.decode(model.generate(context, maxNewTokens)[0].tolist())) # generate from the initial context get the first batch and decode it
+  print(lm.decode(model.generate(context, maxNewTokens, blockSize, 4)[0].tolist())) # generate from the initial context get the first batch and decode it
