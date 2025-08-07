@@ -24,9 +24,9 @@ class BigramModel(nn.Module):
     # numHeads heads of self-attention model to apply multiple parallel one head of self-attentions 
     self.saHeads = MultiHeadAttention(numHeads, headSize // numHeads, nEmbed, blockSize) # (B, T, headSize)
     # a simple feed forward network
-    self.feedForward = FeedForward(nEmbed) # results are same dimensions
-    # language modelling head (C, vocabSize) linear module (decoder) to turn headSize dimension back to vocabSize dimension (vocabSize possible next tokens)
-    self.lmHead = nn.Linear(headSize, vocabSize) # (C, vocabSize)
+    self.feedForward = FeedForward(headSize) # results are same dimensions
+    # language modelling head (headSize, vocabSize) linear module (decoder) to turn headSize dimension back to vocabSize dimension (vocabSize possible next tokens)
+    self.lmHead = nn.Linear(headSize, vocabSize) # (headSize, vocabSize)
 
   # forward function is implicitly called when the instance (object) is called directly
   # forward pass/evaluation of the model -> contexts is the input, targets is the target output

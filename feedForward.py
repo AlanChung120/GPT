@@ -6,11 +6,11 @@ class FeedForward(nn.Module):
     Allows tokens to think/compute on the data gathered from the self-attention (communication between tokens)
   """
 
-  def __init__(self, nEmbed):
+  def __init__(self, nSize):
     super().__init__()
-    # network with a linear layer network follwed by a non-linearity (multi-layer perceptron)
+    # network with a linear layer follwed by a non-linearity (multi-layer perceptron)
     self.network = nn.Sequential(
-      nn.Linear(nEmbed, nEmbed),
+      nn.Linear(nSize, nSize),
       nn.ReLU(),
     )
   
