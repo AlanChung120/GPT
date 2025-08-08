@@ -10,8 +10,9 @@ class FeedForward(nn.Module):
     super().__init__()
     # network with a linear layer follwed by a non-linearity (multi-layer perceptron)
     self.network = nn.Sequential(
-      nn.Linear(nSize, nSize),
+      nn.Linear(nSize, 4 * nSize),
       nn.ReLU(),
+      nn.Linear(4 * nSize, nSize),
     )
   
   # forward pass of the network

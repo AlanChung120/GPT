@@ -63,11 +63,19 @@ class MultiHeadAttention(nn.Module):
     muliple independent communication channels to allow many different types of communication (attention) between tokens (ex. consonants, vowels)
     and decode them into the output
   """
+  # nEmbed is the dimension of the inputs (previously calculated) into self-attention (embedding dimension)
+  # blockSize T: number of time, sequential characters in a context chunk
   def __init__(self, numHeads, headSize, nEmbed, blockSize):
     super().__init__()
-    # multiple single head of self-attention in paraellel
-    self.heads = nn.ModuleList((AttentionHead(headSize, nEmbed, blockSize)) for _ in range(numHeads)) 
+    # smaller head size for multi-head self attention
+    multiHeadSize = headSize // numHeads
+    # multiple smaller single head of self-attention in paraellel
+    self.heads = nn.ModuleList((AttentionHead(multiHeadSize, nEmbed, blockSize)) for _ in range(numHeads)) 
+    self.proj = nn.Linear(headSize, headSize)
   
+  # run multiple single head of self-attention in paraellel (B, T, C) -> (B, T, headSize)
   def forward(self, x):
     # run multiple single head of self-attention and concatenate the outputs over the channel dimension (C)
-    return torch.cat([head(x) for head in self.heads], dim=-1)
+    out = torch.cat([head(x) for head in self.heads], dim=-1)
+    out = self.proj(out)
+    return out

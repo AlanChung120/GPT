@@ -49,7 +49,8 @@ if __name__ == '__main__':
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   maxNewTokens = 500
   nEmbed = 32 # embedding dimensions (intermediate step)
-  attentionHeadSize = 32 # head size for one head of self-attention
+  # should be equal to nEmbed to execute multiple iteration of blocks (output of self attention back into input)
+  attentionHeadSize = nEmbed # head size for one head of self-attention
   attentionNumHeads = 4 # number of self-attention heads to run in parallel
 
   # read in the file (1,000,000 characters) can change

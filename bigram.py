@@ -18,7 +18,7 @@ class BigramModel(nn.Module):
     # (1) -> (1 * C)
     self.tokenEmbeddingTable = nn.Embedding(vocabSize, vocabSize) # (C, C)
 
-  # forward function is implicitly called when the instance (object) is called directly
+  # forward function is implicitly called when the instance (object) is called directly (B, T) -> (B, T, vocabSize)
   # forward pass/evaluation of the model -> contexts is the input, targets is the target output
   def forward(self, contexts, targets=None):
     # B = batch size (compute in parallel)

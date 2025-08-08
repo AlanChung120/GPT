@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from attentionHead import MultiHeadAttention
-from feedForward import FeedForward
+from block import Block
 torch.manual_seed(1337) # set seed for consistency
 
 class BigramModel(nn.Module):
@@ -10,7 +9,7 @@ class BigramModel(nn.Module):
   A class used to represent a Bigram Language Model
   (predicts the probablilty of a sequence of tokens by considering the preceding token for each token: P(token | preceding token))
   """
-
+  # required: nEmbed = headSize (input into output for blocks)
   def __init__(self, nEmbed, vocabSize, blockSize, headSize, numHeads):
     super().__init__()
     # initialize the embedding table to initial values p = 1/C -> logit(p) = log(1/C / (1 - (1/C))) = log(1/(C - 1))
@@ -21,19 +20,21 @@ class BigramModel(nn.Module):
     self.tokenEmbeddingTable = nn.Embedding(vocabSize, nEmbed) # (vocabSize, C) encode token identity
     # object representing a look up table of blockSize by nEmbed that stores the nEmbed logits for all possible token positions
     self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (T, C) encode token position
-    # numHeads heads of self-attention model to apply multiple parallel one head of self-attentions 
-    self.saHeads = MultiHeadAttention(numHeads, headSize // numHeads, nEmbed, blockSize) # (B, T, headSize)
-    # a simple feed forward network
-    self.feedForward = FeedForward(headSize) # results are same dimensions
+    # multiple iteration of self-attention (communication) and feed forward (computation) blocks
+    self.blocks = nn.Sequential(
+      Block(headSize, numHeads, nEmbed, blockSize), 
+      Block(headSize, numHeads, nEmbed, blockSize), 
+      Block(headSize, numHeads, nEmbed, blockSize), 
+    ) # 3 * (B, T, nEmbed/headSize)
     # language modelling head (headSize, vocabSize) linear module (decoder) to turn headSize dimension back to vocabSize dimension (vocabSize possible next tokens)
     self.lmHead = nn.Linear(headSize, vocabSize) # (headSize, vocabSize)
 
-  # forward function is implicitly called when the instance (object) is called directly
+  # forward function is implicitly called when the instance (object) is called directly (B, T) -> (B, T, vocabSize)
   # forward pass/evaluation of the model -> contexts is the input, targets is the target output
   def forward(self, contexts, targets=None, device=None):
     # B = batch size (compute in parallel)
     # T = time, block size, sequential characters in a context chunk
-    # C = channel, nEmbed
+    # C = channel, nEmbed (=headSize in this case)
     # vocabSize = all possible next tokens
     B, T = contexts.shape
 
@@ -46,10 +47,8 @@ class BigramModel(nn.Module):
     positionEmbedding = self.positionEmbeddingTable(torch.arange(T, device=device)) # (T) -> (T, C)
     # encode both positional and prececing token (context) embedding 
     x = tokenEmbedding + positionEmbedding # (B, T, C) + (B (B copies of positionEmbedding automatically added), T, C) = (B, T, C)
-    # apply multiple heads of self-attention 
-    x = self.saHeads(x) # (B, T, C) -> (B, T, headSize)
-    # apply a feed forward network
-    x = self.feedForward(x) # (B, T, headSize) -> (B, T, headSize)
+    # run the transformer blocks
+    x = self.blocks(x) # (B, T, C) -> (B, T, headSize)
     # convert headSize (which is C and nEmbed in most cases) dimension back to vocabSize dimension to get the logits for all possible next tokens
     logits = self.lmHead(x) # (B, T, headSize) -> (B, T, vocabSize)
 
