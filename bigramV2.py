@@ -20,7 +20,7 @@ class BigramModel(nn.Module):
     self.tokenEmbeddingTable = nn.Embedding(vocabSize, nEmbed) # (vocabSize, C) encode token identity
     # object representing a look up table of blockSize by nEmbed that stores the nEmbed logits for all possible token positions
     self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (T, C) encode token position
-    # multiple iteration of self-attention (communication) and feed forward (computation) blocks
+    # multiple iteration of self-attention (communication) and feed forward (computation) blocks to intersperse them
     self.blocks = nn.Sequential(
       Block(headSize, numHeads, nEmbed, blockSize), 
       Block(headSize, numHeads, nEmbed, blockSize), 

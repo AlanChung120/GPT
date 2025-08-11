@@ -69,13 +69,15 @@ class MultiHeadAttention(nn.Module):
     super().__init__()
     # smaller head size for multi-head self attention
     multiHeadSize = headSize // numHeads
-    # multiple smaller single head of self-attention in paraellel
+    # multiple smaller single head of self-attention in paraellel (numHeads * multiHeadSize = headSize for channel dimension consistency)
     self.heads = nn.ModuleList((AttentionHead(multiHeadSize, nEmbed, blockSize)) for _ in range(numHeads)) 
+    # Linear Projection of the outcome back into the residual pathway
     self.proj = nn.Linear(headSize, headSize)
   
   # run multiple single head of self-attention in paraellel (B, T, C) -> (B, T, headSize)
   def forward(self, x):
     # run multiple single head of self-attention and concatenate the outputs over the channel dimension (C)
     out = torch.cat([head(x) for head in self.heads], dim=-1)
+    # perform Linear Projection of the outcome back into the residual pathway
     out = self.proj(out)
     return out

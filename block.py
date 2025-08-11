@@ -20,7 +20,12 @@ class Block(nn.Module):
   # one forward pass of the block (B, T, C/nEmbed/headSize) -> (B, T, headSize)
   def forward(self, x):
     # apply multiple heads of self-attention 
-    x = x + self.saHeads(x) # (B, T, C/nEmbed/headSize) + (B, T, headSize) = (B, T, headSize)
+    # perform residual connetions (shortcuts) which allow bypassing multiple layers to optimize deep neural networks
+    # Mitigates vanishing gradient problem (early layers have trouble learning due to diminishing gradients as they propogate backwards many layers)
+    # We allow residual connection to skip and allow direct path for gradients to flow thus preventing vanshing
+    # fork off do calculations (not taking the shortcut), comeback and add (project) to original input (residual pathway/connection)
+    # network learns the residuals (difference between input and output) rather than the output itself
+    x = x + self.saHeads(x) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     # apply a feed forward network
-    x = x + self.feedForward(x)  # (B, T, C/nEmbed/headSize) + (B, T, headSize) = (B, T, headSize)
+    x = x + self.feedForward(x)  # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     return x # (B, T, headSize)
