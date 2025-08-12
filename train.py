@@ -44,7 +44,7 @@ if __name__ == '__main__':
   blockSize = 256 # maximum context length (chunk length) (that the model will be used to)
   epochs = 5000
   printInterval = 500
-  learningRate = 3e-4 # lower the bigger the neural network
+  learningRate = 3e-4 # bigger the neural network the lower
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   maxNewTokens = 10000
