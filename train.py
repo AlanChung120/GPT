@@ -16,7 +16,7 @@ def getBatch(type):
 @torch.no_grad() # not call backward step (for pytorch efficiency)
 def estimateLoss():
   lossEstimates = {}
-  # eval = train (no dropout batchnorm layers) in the bigram model so it does nothing
+  # disables dropout batchnorm layers
   model.eval() # switch to eval mode (bc some layers wil behave differently ex. dropout batchnorm layers)
   # for both splits
   for split in ['train', 'val']:
@@ -27,31 +27,33 @@ def estimateLoss():
       logits, loss = model(X, Y, device)
       losses[k] = loss.item() # store the loss
     lossEstimates[split] = losses.mean() # average out estimateIters iterations of losses
-  # eval = train (no dropout batchnorm layers) in the bigram model so it does nothing
+  # enables dropout batchnorm layers
   model.train() # switch to train mode (bc some layers wil behave differently ex. dropout batchnorm layers)
   return lossEstimates 
 
 if __name__ == '__main__':
   torch.manual_seed(1337) # set seed for consistency
 
-  # hyperparameters
+  # hyperparameters----------------------------------------------------------------------------------
   # train in chunks for efficiency
-  batchSize = 32 # independent chunks to process in parallel (GPU efficient)
+  batchSize = 64 # independent chunks to process in parallel (GPU efficient)
   # context-target based chunk training: the chunk contains information for every element in the chunk,
   # that element can act as a target and everything preceding can act as the context. So it contains each
   # element's positional information (context (as low as one characater) -> target)
   # Allow the model to see many different context sizes
-  blockSize = 8 # maximum context length (chunk length) (that the model will be used to)
+  blockSize = 256 # maximum context length (chunk length) (that the model will be used to)
   epochs = 5000
   printInterval = 500
-  learningRate = 1e-3
+  learningRate = 3e-4 # lower the bigger the neural network
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
-  maxNewTokens = 500
-  nEmbed = 32 # embedding dimensions (intermediate step)
+  maxNewTokens = 10000
+  nEmbed = 384 # embedding dimensions (intermediate step)
   # should be equal to nEmbed to execute multiple iteration of blocks (output of self attention back into input)
   attentionHeadSize = nEmbed # head size for one head of self-attention
-  attentionNumHeads = 4 # number of self-attention heads to run in parallel
+  attentionNumHeads = 6 # number of self-attention heads to run in parallel
+  numLayers = 6 # number of block layers
+  dropout = 0.2 # dropout rate
 
   # read in the file (1,000,000 characters) can change
   with open('input.txt', 'r', encoding='utf-8') as file:
@@ -67,7 +69,7 @@ if __name__ == '__main__':
   trainData = data[:split]
   valData = data[split:]
   
-  model = BigramModel(nEmbed, lm.vocabSize, blockSize, attentionHeadSize, attentionNumHeads).to(device)
+  model = BigramModel(nEmbed, lm.vocabSize, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
   # optimizer: method of updating the parameters using the gradients, ADAM (adaptive learning rate)
   optimizer = torch.optim.AdamW(model.parameters(), lr=learningRate)
 
@@ -91,4 +93,6 @@ if __name__ == '__main__':
 
   # generate from the model
   context = torch.zeros((1, 1), dtype=torch.long, device=device) # feed the new line character "\n" (0) as the starting sequence/context
-  print(lm.decode(model.generate(context, maxNewTokens, blockSize)[0].tolist())) # generate from the initial context get the first batch and decode it
+  # write the output to a file
+  with open("output.txt", "w") as file:
+    file.write(lm.decode(model.generate(context, maxNewTokens, blockSize)[0].tolist())) # generate from the initial context get the first batch and decode it

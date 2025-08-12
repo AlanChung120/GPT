@@ -10,7 +10,7 @@ class BigramModel(nn.Module):
   (predicts the probablilty of a sequence of tokens by considering the preceding token for each token: P(token | preceding token))
   """
   # required: nEmbed = headSize (input into output for blocks)
-  def __init__(self, nEmbed, vocabSize, blockSize, headSize, numHeads):
+  def __init__(self, nEmbed, vocabSize, blockSize, headSize, numHeads, numLayers, dropout):
     super().__init__()
     # initialize the embedding table to initial values p = 1/C -> logit(p) = log(1/C / (1 - (1/C))) = log(1/(C - 1))
     # logits: scores/confidence level in the next token but instead of probablilties (0,1) it maps to real numbers (-inf, inf)
@@ -21,11 +21,12 @@ class BigramModel(nn.Module):
     # object representing a look up table of blockSize by nEmbed that stores the nEmbed logits for all possible token positions
     self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (T, C) encode token position
     # multiple iteration of self-attention (communication) and feed forward (computation) blocks to intersperse them
-    self.blocks = nn.Sequential(
-      Block(headSize, numHeads, nEmbed, blockSize), 
-      Block(headSize, numHeads, nEmbed, blockSize), 
-      Block(headSize, numHeads, nEmbed, blockSize), 
-    ) # 3 * (B, T, nEmbed/headSize)
+    self.blocks = nn.Sequential(*[Block(headSize, numHeads, nEmbed, blockSize, dropout) for _ in range(numLayers)]) # numLayers * (B, T, nEmbed/headSize) 
+    # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
+    # contrast to batch normalization which normalizes column (singular feature/neuron across batch dimension) to N(0, 1) and scale (gamma) and shift (beta)
+    # gamma and beta are learnable parameters, this improves training stability and speed
+    # batch/blockSize/time act as batch dimensions (per token transformation, normalizes the features into N(0, 1))
+    self.layerNorm = nn.LayerNorm(headSize)
     # language modelling head (headSize, vocabSize) linear module (decoder) to turn headSize dimension back to vocabSize dimension (vocabSize possible next tokens)
     self.lmHead = nn.Linear(headSize, vocabSize) # (headSize, vocabSize)
 
@@ -49,6 +50,8 @@ class BigramModel(nn.Module):
     x = tokenEmbedding + positionEmbedding # (B, T, C) + (B (B copies of positionEmbedding automatically added), T, C) = (B, T, C)
     # run the transformer blocks
     x = self.blocks(x) # (B, T, C) -> (B, T, headSize)
+    # run the layer norm
+    x = self.layerNorm(x) # (B, T, headSize) -> (B, T, headSize)
     # convert headSize (which is C and nEmbed in most cases) dimension back to vocabSize dimension to get the logits for all possible next tokens
     logits = self.lmHead(x) # (B, T, headSize) -> (B, T, vocabSize)
 
