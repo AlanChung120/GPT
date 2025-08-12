@@ -32,7 +32,7 @@ class BigramModel(nn.Module):
 
   # forward function is implicitly called when the instance (object) is called directly (B, T) -> (B, T, vocabSize)
   # forward pass/evaluation of the model -> contexts is the input, targets is the target output
-  def forward(self, contexts, targets=None, device=None):
+  def forward(self, device, contexts, targets=None):
     # B = batch size (compute in parallel)
     # T = time, block size, sequential characters in a context chunk
     # C = channel, nEmbed (=headSize in this case)
@@ -73,14 +73,14 @@ class BigramModel(nn.Module):
     return logits, loss
   
   # generate maxNewTokens tokens given context tokens contexts (B, T)
-  def generate(self, contexts, maxNewTokens, blockSize):
+  def generate(self, contexts, maxNewTokens, blockSize, device):
     seq = contexts # initialize the sequence of tokens with the current context
     # generate batchSize next tokens in parallel for maxNewTokens tokens
     for _ in range(maxNewTokens):
       # crop seq to get last blockSize tokens for the positionEmbeddingTable (otherwise it will run out of scope; it only has embeddings for blockSize)
       seqBlock = seq[:, -blockSize:] # (B, blockSize, vocabSize)
       # get the predictions in the form of logits
-      logits, loss = self(seqBlock) # call the forward function
+      logits, loss = self(device, seqBlock) # call the forward function
       # get the most recent (last time step) token for all batches (WILL FIX: not ideal to only look at last token)
       lastLogits = logits[:, -1, :] # (B, 1, vocabSize)
       # convert the logits into probabilities using softmax (logits for each vocabSize -> probability distribution of length vocabSize)

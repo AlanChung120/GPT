@@ -24,7 +24,7 @@ def estimateLoss():
     # average out the loss over multiple batches (estimateIters batches)
     for k in range(estimateIters):
       X, Y = getBatch(split)
-      logits, loss = model(X, Y, device)
+      logits, loss = model(device, X, Y)
       losses[k] = loss.item() # store the loss
     lossEstimates[split] = losses.mean() # average out estimateIters iterations of losses
   # enables dropout batchnorm layers
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     xBatch, yBatch = getBatch('train')
 
     # forward pass: evaluate the logits (prediction scores) and the loss (want to minimize this)
-    logits, loss = model(xBatch, yBatch, device)
+    logits, loss = model(device, xBatch, yBatch)
     
     # backward step
     optimizer.zero_grad(set_to_none=True) # zero out gradients from previous epoch
@@ -95,4 +95,4 @@ if __name__ == '__main__':
   context = torch.zeros((1, 1), dtype=torch.long, device=device) # feed the new line character "\n" (0) as the starting sequence/context
   # write the output to a file
   with open("output.txt", "w") as file:
-    file.write(lm.decode(model.generate(context, maxNewTokens, blockSize)[0].tolist())) # generate from the initial context get the first batch and decode it
+    file.write(lm.decode(model.generate(context, maxNewTokens, blockSize, device)[0].tolist())) # generate from the initial context get the first batch and decode it
