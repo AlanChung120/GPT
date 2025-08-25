@@ -1,3 +1,3 @@
-# AIChatBot
+# GPT
 
 Python = 3.12.5
