@@ -26,10 +26,10 @@ class AttentionHead(nn.Module):
     self.query = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the query vector (no bias = matrix multiply with some fixed weights)
     self.value = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the value vector (no bias = matrix multiply with some fixed weights)
     # register buffer (not a parameter) a T by T communications matrix where 1s in the communications matrix represents the entries that are allowed to communicate
-    # decoder block: use of triangular masking (tokens from the future is not considered) communications is a T by T lower triangular 1s matrix 
+    # decoder block: use of triangular masking (tokens from the future is not considered), communications is a T by T lower triangular 1s matrix 
     if mask:
       self.register_buffer('communications', torch.tril(torch.ones(blockSize, blockSize)))
-    # encoder block: no masking (tokens from the future is considered, communication at all levels) communications is a T by T all 1s matrix
+    # encoder block: no masking (tokens from the future is considered, communication at all levels), communications is a T by T all 1s matrix
     else:
       self.register_buffer('communications', torch.ones(blockSize, blockSize))
     # dropout is a regularization technique to prevent overfitting
@@ -54,7 +54,7 @@ class AttentionHead(nn.Module):
     # scaled attention divides weightMatrix by sqrt(headSize) which will scale weightMatrix variance to query and key variance (control the variance)
     # which then the softmax will stay diffuse and not saturate too much to the extreme (converge to one hot vector)
     weightMatrix = q @ k.transpose(-2, -1) * headSize**-0.5 # transpose last two dimensions: (B, T, headSize) @ (B, headSize, T) -> (B, T, T) B T by T matrices
-    # Filter/mask appropriately according to communication matrix set above (encoder/decoder step)
+    # Filter/mask appropriately according to communications matrix set above (encoder/decoder step)
     # If decoder then filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
     # If encoder nothing happens (they're all 1 so none of them will be zero)
     weightMatrix = weightMatrix.masked_fill(self.communications[:T, :T] == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
