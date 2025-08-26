@@ -21,7 +21,7 @@ class Encoder(nn.Module):
     # object representing a look up table of blockSize by nEmbed that stores the nEmbed logits for all possible token positions
     self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (T, C) encode token position
     # multiple iteration of self-attention (communication) and feed forward (computation) blocks to intersperse them
-    self.blocks = nn.Sequential(*[Block(headSize, numHeads, nEmbed, blockSize, dropout) for _ in range(numLayers)]) # numLayers * (B, T, nEmbed/headSize) 
+    self.blocks = nn.Sequential(*[Block(headSize, numHeads, nEmbed, blockSize, dropout, False) for _ in range(numLayers)]) # numLayers * (B, T, nEmbed/headSize) 
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
     # contrast to batch normalization which normalizes column (singular feature/neuron across batch dimension) to N(0, 1) and scale (gamma) and shift (beta)
     # gamma and beta are learnable parameters, this improves training stability and speed
