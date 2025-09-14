@@ -79,7 +79,7 @@ class MultiHeadAttention(nn.Module):
     # smaller head size for multi-head self attention
     multiHeadSize = headSize // numHeads
     # multiple smaller single head of self-attention in paraellel (numHeads * multiHeadSize = headSize for channel dimension consistency)
-    self.heads = nn.ModuleList((AttentionHead(multiHeadSize, nEmbed, blockSize, dropout, mask)) for _ in range(numHeads)) 
+    self.heads = nn.ModuleList((CrossAttentionHead(multiHeadSize, nEmbed, blockSize, dropout, mask)) for _ in range(numHeads)) 
     # Linear Projection of the outcome back into the residual pathway
     self.proj = nn.Linear(headSize, headSize)
     # dropout is a regularization technique to prevent overfitting, dropout right before residual connection into residual pathway 

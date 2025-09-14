@@ -6,7 +6,8 @@ torch.manual_seed(1337) # set seed for consistency
 
 class Encoder(nn.Module):
   """
-  A class used to represent a encoder Model (just run the encoder to test) like a block
+  A class used to represent a encoder Model (just run the encoder to test) like a block to contextualize input 
+  for cross-head attention for decoder
   """
   # required: nEmbed = headSize (input into output for blocks)
   def __init__(self, nEmbed, vocabSize, blockSize, headSize, numHeads, numLayers, dropout):
@@ -23,16 +24,16 @@ class Encoder(nn.Module):
     self.blocks = nn.Sequential(*[Block(headSize, numHeads, nEmbed, blockSize, dropout, False) for _ in range(numLayers)]) # numLayers * (B, T, nEmbed/headSize) 
 
   # forward function is implicitly called when the instance (object) is called directly (B, T) -> (B, T, vocabSize)
-  # forward pass/evaluation of the model -> contexts is the input, targets is the target output
-  def forward(self, device, contexts, targets=None):
+  # forward pass/evaluation of the model -> contexts is the input
+  def forward(self, device, contexts):
     # B = batch size (compute in parallel)
     # T = time, block size, sequential characters in a context chunk
     # C = channel, nEmbed (=headSize in this case)
     # vocabSize = all possible next tokens
     B, T = contexts.shape
 
-    # contexts and targets are (B, T) -> for given context token contexts[i][j] the target token is targets[i][j]
-    # returns a (B, T, vocabSize) tensor given the contexts by getting positional and identity embeddings returned by the embedding tables by going 
+    # contexts is (B, T)
+    # returns a (B, T, headSize) tensor given the contexts by getting positional and identity embeddings returned by the embedding tables by going 
     # through all the context tokens in contexts and all the positions and adding the embeddings and converting to vocabSize logits for next possible tokens
     # get preceding token (context) embedding by inputting contexts into tokenEmbeddingTable
     tokenEmbedding = self.tokenEmbeddingTable(contexts) # (B, T) -> (B, T, C)
