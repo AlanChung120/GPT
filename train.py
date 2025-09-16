@@ -1,6 +1,6 @@
 import torch
 from languageModel import LanguageModel
-from bigramV2 import BigramModel
+from decoder import Decoder
 
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
@@ -69,7 +69,7 @@ if __name__ == '__main__':
   trainData = data[:split]
   valData = data[split:]
   
-  model = BigramModel(nEmbed, lm.vocabSize, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
+  model = Decoder(nEmbed, lm.vocabSize, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
   # optimizer: method of updating the parameters using the gradients, ADAM (adaptive learning rate)
   optimizer = torch.optim.AdamW(model.parameters(), lr=learningRate)
 
@@ -96,3 +96,20 @@ if __name__ == '__main__':
   # write the output to a file
   with open("output.txt", "w") as file:
     file.write(lm.decode(model.generate(context, maxNewTokens, blockSize, device)[0].tolist())) # generate from the initial context get the first batch and decode it
+  
+  # training data to save
+  trainingData = {
+    "model_state": model.state_dict(),
+    "batchSize": batchSize,
+    "blockSize": blockSize,
+    "nEmbed": nEmbed,
+    "attentionHeadSize": attentionHeadSize,
+    "attentionNumHeads": attentionNumHeads,
+    "numLayers": numLayers
+  }
+
+  # save to a py torch file
+  FILE = "model.pth"
+  torch.save(trainingData, FILE)
+
+  print(f'Training complete. File saved to {FILE}')

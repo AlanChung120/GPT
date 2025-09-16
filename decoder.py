@@ -4,9 +4,9 @@ from torch.nn import functional as F
 from block import Block
 torch.manual_seed(1337) # set seed for consistency
 
-class BigramModel(nn.Module):
+class Decoder(nn.Module):
   """
-  A class used to represent a Bigram Language Model
+  A class used to represent a Decoder using a Bigram Language Model
   (predicts the probablilty of a sequence of tokens by considering the preceding token for each token: P(token | preceding token))
   """
   # required: nEmbed = headSize (input into output for blocks)
