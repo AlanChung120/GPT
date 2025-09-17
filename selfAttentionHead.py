@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 torch.manual_seed(1337) # set seed for consistency
 
-class AttentionHead(nn.Module):
+class SelfAttentionHead(nn.Module):
   """
   A class used to represent a one head of self-attention (self because keys and values all come from the same source as queries (x) otherwise it is cross-attention)
     Attention is communication mechanism of a directed graph that aggregates via the weighted sum from all nodes that point to them (all the preceding tokens in our case)
@@ -67,7 +67,7 @@ class AttentionHead(nn.Module):
 
     return out
   
-class MultiHeadAttention(nn.Module):
+class MultiHeadSelfAttention(nn.Module):
   """ 
   A class used to represent a multiple heads (communication channels) of self-attention in parallel (and concatenating the results)
     muliple independent communication channels to allow many different types of communication (attention) between tokens (ex. consonants, vowels)
@@ -80,7 +80,7 @@ class MultiHeadAttention(nn.Module):
     # smaller head size for multi-head self attention
     multiHeadSize = headSize // numHeads
     # multiple smaller single head of self-attention in paraellel (numHeads * multiHeadSize = headSize for channel dimension consistency)
-    self.heads = nn.ModuleList((AttentionHead(multiHeadSize, nEmbed, blockSize, dropout, mask)) for _ in range(numHeads)) 
+    self.heads = nn.ModuleList((SelfAttentionHead(multiHeadSize, nEmbed, blockSize, dropout, mask)) for _ in range(numHeads)) 
     # Linear Projection of the outcome back into the residual pathway
     self.proj = nn.Linear(headSize, headSize)
     # dropout is a regularization technique to prevent overfitting, dropout right before residual connection into residual pathway 

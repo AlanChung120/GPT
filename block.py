@@ -1,5 +1,6 @@
 import torch.nn as nn
-from attentionHead import MultiHeadAttention
+from selfAttentionHead import MultiHeadSelfAttention
+from crossAttentionHead import MultiHeadCrossAttention
 from feedForward import FeedForward
 
 class Block(nn.Module):
@@ -13,7 +14,9 @@ class Block(nn.Module):
   def __init__(self, headSize, numHeads, nEmbed, blockSize, dropout, attentionMask):
     super().__init__()
     # numHeads heads of smaller one head of self-attention models to apply multiple parallel one head of self-attentions (communication)
-    self.saHeads = MultiHeadAttention(numHeads, headSize, nEmbed, blockSize, dropout, attentionMask) # (B, T, headSize)
+    self.saHeads = MultiHeadSelfAttention(numHeads, headSize, nEmbed, blockSize, dropout, attentionMask) # (B, T, headSize)
+    # numHeads heads of smaller one head of cross-attention models to apply multiple parallel one head of cross-attentions (communication with encoder)
+    self.caHeads = MultiHeadCrossAttention(numHeads, headSize, nEmbed, blockSize, dropout, attentionMask)
     # a simple feed forward network (computation)
     self.feedForward = FeedForward(headSize, dropout) # results are same dimensions: (B, T, headSize)
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
@@ -22,6 +25,7 @@ class Block(nn.Module):
     # batch/blockSize/time act as batch dimensions (per token transformation, normalizes the features into unit N(0, 1))
     self.layerNorm1 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, headSize)
     self.layerNorm2 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, headSize)
+    self.layerNorm3 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, headSize)
   
   # one forward pass of the block (B, T, C/nEmbed/headSize) -> (B, T, headSize)
   def forward(self, x):
@@ -33,6 +37,8 @@ class Block(nn.Module):
     # network learns the residuals (difference between input and output) rather than the output itself
     # apply layer norm before transformation (changed from the original transformer model)
     x = x + self.saHeads(self.layerNorm1(x)) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
+    # apply a cross attention
+    x = x + self.caHeads(self.layerNorm2(x)) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     # apply a feed forward network
-    x = x + self.feedForward(self.layerNorm2(x))  # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
+    x = x + self.feedForward(self.layerNorm3(x))  # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     return x # (B, T, headSize)

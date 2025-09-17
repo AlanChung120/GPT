@@ -66,7 +66,7 @@ class CrossAttentionHead(nn.Module):
 
     return out
   
-class MultiHeadAttention(nn.Module):
+class MultiHeadCrossAttention(nn.Module):
   """ 
   A class used to represent a multiple heads (communication channels) of self-attention in parallel (and concatenating the results)
     muliple independent communication channels to allow many different types of communication (attention) between tokens (ex. consonants, vowels)
