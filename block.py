@@ -16,7 +16,7 @@ class Block(nn.Module):
     # numHeads heads of smaller one head of self-attention models to apply multiple parallel one head of self-attentions (communication)
     self.saHeads = MultiHeadSelfAttention(numHeads, headSize, nEmbed, blockSize, dropout, attentionMask) # (B, T, headSize)
     # numHeads heads of smaller one head of cross-attention models to apply multiple parallel one head of cross-attentions (communication with encoder)
-    self.caHeads = MultiHeadCrossAttention(numHeads, headSize, nEmbed, blockSize, dropout, attentionMask)
+    self.caHeads = MultiHeadCrossAttention(numHeads, headSize, nEmbed, blockSize, dropout, attentionMask) # (B, T, headSize)
     # a simple feed forward network (computation)
     self.feedForward = FeedForward(headSize, dropout) # results are same dimensions: (B, T, headSize)
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
