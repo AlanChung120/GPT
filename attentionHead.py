@@ -3,11 +3,12 @@ import torch.nn as nn
 from torch.nn import functional as F
 torch.manual_seed(1337) # set seed for consistency
 
-class CrossAttentionHead(nn.Module):
+class AttentionHead(nn.Module):
   """
-  A class used to represent a one head of cross-attention
+  A class used to represent a one head of attention (self because keys and values all come from the same source as queries (x) otherwise it is cross-attention)
     Attention is communication mechanism of a directed graph that aggregates via the weighted sum from all nodes that point to them (all the preceding tokens in our case)
     no notion of space, just set of vectors and we postionally encode them (positionEmbeddingTable)
+    - self-attention (keys and values are produced from the same source as queries) 
     - cross-attention (queries are produced from x but keys and values come from an external source (encoder module))
     - encoder block(all tokens communciate with each other, need for sentiment of sentence)
     - decoder block (triangular masking to prevent communcation from the future, used in language modelling/autoregressive to "decode")
@@ -66,7 +67,7 @@ class CrossAttentionHead(nn.Module):
 
     return out
   
-class MultiHeadCrossAttention(nn.Module):
+class MultiHeadAttention(nn.Module):
   """ 
   A class used to represent a multiple heads (communication channels) of self-attention in parallel (and concatenating the results)
     muliple independent communication channels to allow many different types of communication (attention) between tokens (ex. consonants, vowels)
@@ -79,7 +80,7 @@ class MultiHeadCrossAttention(nn.Module):
     # smaller head size for multi-head self attention
     multiHeadSize = headSize // numHeads
     # multiple smaller single head of self-attention in paraellel (numHeads * multiHeadSize = headSize for channel dimension consistency)
-    self.heads = nn.ModuleList((CrossAttentionHead(multiHeadSize, nEmbed, blockSize, dropout, mask)) for _ in range(numHeads)) 
+    self.heads = nn.ModuleList((AttentionHead(multiHeadSize, nEmbed, blockSize, dropout, mask)) for _ in range(numHeads)) 
     # Linear Projection of the outcome back into the residual pathway
     self.proj = nn.Linear(headSize, headSize)
     # dropout is a regularization technique to prevent overfitting, dropout right before residual connection into residual pathway 

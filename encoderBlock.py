@@ -1,5 +1,5 @@
 import torch.nn as nn
-from selfAttentionHead import MultiHeadSelfAttention
+from attentionHead import MultiHeadAttention
 from feedForward import FeedForward
 
 class EncoderBlock(nn.Module):
@@ -13,7 +13,7 @@ class EncoderBlock(nn.Module):
   def __init__(self, headSize, numHeads, nEmbed, blockSize, dropout):
     super().__init__()
     # numHeads heads of smaller one head of self-attention models to apply multiple parallel one head of self-attentions (communication)
-    self.saHeads = MultiHeadSelfAttention(numHeads, headSize, nEmbed, blockSize, dropout, False) # (B, T, headSize)
+    self.saHeads = MultiHeadAttention(numHeads, headSize, nEmbed, blockSize, dropout, False) # (B, T, headSize)
     # a simple feed forward network (computation)
     self.feedForward = FeedForward(headSize, dropout) # results are same dimensions: (B, T, headSize)
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
