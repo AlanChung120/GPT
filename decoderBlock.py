@@ -28,7 +28,8 @@ class DecoderBlock(nn.Module):
     self.layerNorm3 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, headSize)
   
   # one forward pass of the block (B, T, C/nEmbed/headSize) -> (B, T, headSize)
-  def forward(self, x):
+  # external is the external source for the cross-attention
+  def forward(self, x, external=None):
     # apply multiple heads of self-attention 
     # perform residual connections (shortcuts) which allow bypassing multiple layers to optimize deep neural networks
     # Mitigates vanishing gradient problem (early layers have trouble learning due to diminishing gradients as they propogate backwards many layers)
@@ -38,7 +39,7 @@ class DecoderBlock(nn.Module):
     # apply layer norm before transformation (changed from the original transformer model)
     x = x + self.saHeads(self.layerNorm1(x)) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     # apply a cross attention
-    x = x + self.caHeads(self.layerNorm2(x)) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
+    x = x + self.caHeads(self.layerNorm2(x), external) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     # apply a feed forward network
     x = x + self.feedForward(self.layerNorm3(x))  # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     return x # (B, T, headSize)
