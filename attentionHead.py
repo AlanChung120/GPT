@@ -5,12 +5,12 @@ torch.manual_seed(1337) # set seed for consistency
 
 class AttentionHead(nn.Module):
   """
-  A class used to represent a one head of attention (self because keys and values all come from the same source as queries (x) otherwise it is cross-attention)
+  A class used to represent a one head of attention (self when keys and values all come from the same source as queries (x) otherwise it is cross-attention)
     Attention is communication mechanism of a directed graph that aggregates via the weighted sum from all nodes that point to them (all the preceding tokens in our case)
     no notion of space, just set of vectors and we postionally encode them (positionEmbeddingTable)
     - self-attention (keys and values are produced from the same source as queries) 
     - cross-attention (queries are produced from x but keys and values come from an external source (encoder module))
-    - encoder block(all tokens communciate with each other, need for sentiment of sentence)
+    - encoder block (all tokens communciate with each other, need for sentiment of sentence)
     - decoder block (triangular masking to prevent communcation from the future, used in language modelling/autoregressive to "decode")
     instead of equal weighted aggregation we implement a batch/data/token dependent affinity (how related, how much to aggregate/learn) matrix aggregation
     each token has a query vector (what I am looking for based on token identity and position) and a key vector (what I contain (token identity and position))
@@ -36,16 +36,19 @@ class AttentionHead(nn.Module):
     # dropout randomly shuts off some subset of neurons every pass, thus training ensemble of subnetworks which is then merged
     self.dropout = nn.Dropout(dropout)
   
-  # Forward pass of a singular head of self-attention (B, T, C) -> (B, T, headSize) 
-  def forward(self, x):
+  # Forward pass of a singular head of attention (B, T, C) -> (B, T, headSize) 
+  # if external provided then it is cross-attention from external otherwise it is self-attention
+  def forward(self, x, external=None):
     # B = batch size (compute in parallel)
     # T = time, block size, sequential characters in a context chunk
     # C = channel, nEmbed (also headSize in most cases)
     B, T, C = x.shape
 
-    # Produce key and query vector in paraellel (no communication between tokens)
-    k = self.key(x) # key vector for all tokens (B, T, C) -> (B, T, headSize) (headSize vector to store identity and position)
+    # Produce key, query, and value vector in paraellel (no communication between tokens)
+    # gets keys and values from external source if provided (cross) if not get it from itself (self)
+    k = self.key(external) if external else self.key(x)  # key vector for all tokens (B, T, C) -> (B, T, headSize) (headSize vector to store identity and position)
     q = self.query(x) # query vector for all tokens (B, T, C) -> (B, T, headSize) (headSize vector to store what identity and position to look for)
+    v = self.value(external) if external else self.value(x) # value vector for all tokens (B, T, C) -> (B, T, headSize) (headSize vector for all tokens that store what private x stores (position and identity))
 
     B, T, headSize = k.shape
 
@@ -62,24 +65,23 @@ class AttentionHead(nn.Module):
     weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence) (B, T, T)
     # perform dropout (randomly prevent some nodes from communicating)
     weightMatrix = self.dropout(weightMatrix)
-    v = self.value(x) # value vector for all tokens (B, T, C) -> (B, T, headSize) (headSize vector for all tokens that store what private x stores (position and identity))
     out = weightMatrix @ v  # (B, T, T) @ (B, T, headSize) -> (B, T, headSize) (for a single head)
 
     return out
   
 class MultiHeadAttention(nn.Module):
   """ 
-  A class used to represent a multiple heads (communication channels) of self-attention in parallel (and concatenating the results)
+  A class used to represent a multiple heads (communication channels) of attention in parallel (and concatenating the results)
     muliple independent communication channels to allow many different types of communication (attention) between tokens (ex. consonants, vowels)
     and decode them into the output
   """
-  # nEmbed is the dimension of the inputs (previously calculated) into self-attention (embedding dimension)
+  # nEmbed is the dimension of the inputs (previously calculated) into attention (embedding dimension)
   # blockSize T: number of time, sequential characters in a context chunk
   def __init__(self, numHeads, headSize, nEmbed, blockSize, dropout, mask):
     super().__init__()
-    # smaller head size for multi-head self attention
+    # smaller head size for multi-head attention
     multiHeadSize = headSize // numHeads
-    # multiple smaller single head of self-attention in paraellel (numHeads * multiHeadSize = headSize for channel dimension consistency)
+    # multiple smaller single head of attention in paraellel (numHeads * multiHeadSize = headSize for channel dimension consistency)
     self.heads = nn.ModuleList((AttentionHead(multiHeadSize, nEmbed, blockSize, dropout, mask)) for _ in range(numHeads)) 
     # Linear Projection of the outcome back into the residual pathway
     self.proj = nn.Linear(headSize, headSize)
@@ -87,10 +89,10 @@ class MultiHeadAttention(nn.Module):
     # dropout randomly shuts off some subset of neurons every pass, thus training ensemble of subnetworks which is then merged
     self.dropout = nn.Dropout(dropout)
   
-  # run multiple single head of self-attention in paraellel (B, T, C) -> (B, T, headSize)
-  def forward(self, x):
-    # run multiple single head of self-attention and concatenate the outputs over the channel dimension (C)
-    out = torch.cat([head(x) for head in self.heads], dim=-1)
+  # run multiple single head of attention in paraellel (B, T, C) -> (B, T, headSize)
+  def forward(self, x, external=None):
+    # run multiple single head of attention and concatenate the outputs over the channel dimension (C)
+    out = torch.cat([head(x, external) for head in self.heads], dim=-1)
     # perform Linear Projection of the outcome back into the residual pathway and dropout
     out = self.dropout(self.proj(out))
     return out
