@@ -4,10 +4,9 @@ from torch.nn import functional as F
 from decoderBlock import DecoderBlock
 torch.manual_seed(1337) # set seed for consistency
 
-class Decoder(nn.Module):
+class Transformer(nn.Module):
   """
-  A class used to represent a Decoder using a Bigram Language Model
-  (predicts the probablilty of a sequence of tokens by considering the preceding token for each token: P(token | preceding token))
+  A class used to represent a transformer model (see tranformer_model.png)
   """
   # required: nEmbed = headSize (input into output for blocks)
   def __init__(self, nEmbed, vocabSize, blockSize, headSize, numHeads, numLayers, dropout):
@@ -32,8 +31,7 @@ class Decoder(nn.Module):
 
   # forward function is implicitly called when the instance (object) is called directly (B, T) -> (B, T, vocabSize)
   # forward pass/evaluation of the model -> contexts is the input, targets is the target output
-  # external is the external sources for cross attention inside blocks, if not provided then it will just do a self-attention
-  def forward(self, device, contexts, targets=None, external=None):
+  def forward(self, device, contexts, targets=None):
     # B = batch size (compute in parallel)
     # T = time, block size, sequential characters in a context chunk
     # C = channel, nEmbed (=headSize in this case)
@@ -50,7 +48,7 @@ class Decoder(nn.Module):
     # encode both positional and prececing token (context) embedding 
     x = tokenEmbedding + positionEmbedding # (B, T, C) + (B (B copies of positionEmbedding automatically added), T, C) = (B, T, C)
     # run the transformer blocks
-    x = self.blocks(x, external) # (B, T, C) -> (B, T, headSize)
+    x = self.blocks(x) # (B, T, C) -> (B, T, headSize)
     # run the layer norm
     x = self.layerNorm(x) # (B, T, headSize) -> (B, T, headSize)
     # convert headSize (which is C and nEmbed in most cases) dimension back to vocabSize dimension to get the logits for all possible next tokens
