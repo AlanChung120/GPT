@@ -1,6 +1,6 @@
 import torch
 from languageModel import LanguageModel
-from decoder import Decoder
+from transformer import Transformer
 
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
@@ -69,7 +69,7 @@ if __name__ == '__main__':
   trainData = data[:split]
   valData = data[split:]
   
-  model = Decoder(nEmbed, lm.vocabSize, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
+  model = Transformer(nEmbed, lm.vocabSize, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
   # optimizer: method of updating the parameters using the gradients, ADAM (adaptive learning rate)
   optimizer = torch.optim.AdamW(model.parameters(), lr=learningRate)
 
