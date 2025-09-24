@@ -17,7 +17,7 @@ class Transformer(nn.Module):
     self.decoder = Decoder(nEmbed, vocabSize, blockSize, headSize, numHeads, numLayers, dropout)
 
   # forward function is implicitly called when the instance (object) is called directly (B, T) -> (B, T, vocabSize)
-  # forward pass/evaluation of the model ->  prompt (B, T) is the encoderInput, contexts (B, T) and targets (B, T) is the decoderInput
+  # forward pass/evaluation of the model ->  prompt (B, T) is the encoder input, contexts (B, T) and targets (B, T) is the decoder input
   def forward(self, device, prompt, contexts, targets):
     external = self.encoder(device, prompt)
     logits, loss = self.decoder(device, contexts, targets, external)
@@ -26,4 +26,4 @@ class Transformer(nn.Module):
   
   # generate maxNewTokens tokens given context tokens contexts (B, T)
   def generate(self, contexts, maxNewTokens, blockSize, device):
-    self.decoder.generate(contexts, maxNewTokens, blockSize, device)
+    return self.decoder.generate(contexts, maxNewTokens, blockSize, device)
