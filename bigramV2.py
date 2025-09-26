@@ -81,7 +81,7 @@ class BigramModel(nn.Module):
       seqBlock = seq[:, -blockSize:] # (B, blockSize, vocabSize)
       # get the predictions in the form of logits
       logits, loss = self(device, seqBlock) # call the forward function
-      # get the most recent (last time step) token for all batches (WILL FIX: not ideal to only look at last token)
+      # get the most recent (last time step) token for all batches
       lastLogits = logits[:, -1, :] # (B, 1, vocabSize)
       # convert the logits into probabilities using softmax (logits for each vocabSize -> probability distribution of length vocabSize)
       probs = F.softmax(lastLogits, dim=-1) # (B, 1, vocabSize)
