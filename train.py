@@ -32,8 +32,8 @@ def estimateLoss():
     losses = torch.zeros(estimateIters) # to store all losses from estimateIters iterations
     # average out the loss over multiple batches (estimateIters batches)
     for k in range(estimateIters):
-      X, Y = getBatch(split)
-      logits, loss = model(device, X, Y)
+      prompts, X, Y = getBatch(split)
+      logits, loss = model(device, prompts, X, Y)
       losses[k] = loss.item() # store the loss
     lossEstimates[split] = losses.mean() # average out estimateIters iterations of losses
   # enables dropout batchnorm layers
