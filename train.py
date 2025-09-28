@@ -61,8 +61,15 @@ if __name__ == '__main__':
 
   lm = LanguageModel(text)
 
-  # encode the entire text data and store it into a torch tensor (multi-dimensional array in pytorch)
-  data = torch.tensor(lm.encode(text), dtype=torch.long)
+  # encode the text data into list of (prompt, answer) tuple. prompt and answer is stored as a torch tensor (multi-dimensional array in pytorch)
+  data = [] # list of (prompt, answer) tuple for training/testing
+  currentPrompt = [] # prompt of the current line
+  for line in text.splitlines():  # go line by line (prompt and answer is separated by \n)
+    if (len(currentPrompt) == 0): # if prompt is not set then we set it
+      currentPrompt = torch.tensor(lm.encode(line), dtype=torch.long)
+    else: # if prompt is set then we add the (prompt, answer) tuple to data
+      data.append((currentPrompt, torch.tensor(lm.encode(line), dtype=torch.long)))
+      currentPrompt = []
 
   # split data into train data and validation sets (prevent and get a sense of overfitting)
   split = int(0.9 * len(data)) # first part of the data will be train then rest of it will be validation
