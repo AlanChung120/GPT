@@ -27,7 +27,7 @@ class Encoder(nn.Module):
   # forward pass/evaluation of the model -> contexts is the input
   def forward(self, device, contexts):
     # B = batch size (compute in parallel)
-    # T = time, block size, sequential characters in a context chunk
+    # T = time, prompt size, sequential characters in the prompt
     # C = channel, nEmbed (=headSize in this case)
     # vocabSize = all possible next tokens
     B, T = contexts.shape
