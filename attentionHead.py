@@ -26,7 +26,7 @@ class AttentionHead(nn.Module):
     self.query = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the query vector (no bias = matrix multiply with some fixed weights)
     self.value = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the value vector (no bias = matrix multiply with some fixed weights)
     # register buffer (not a parameter) a T by T lower triangular 1s matrix where 1s represents the entries that are allowed to communicate 
-    # only used when mask = true  (decoder block self-attention)
+    # only used when mask = true (decoder block self-attention)
     self.register_buffer('tril', torch.tril(torch.ones(blockSize, blockSize)))
     # dropout is a regularization technique to prevent overfitting
     # dropout randomly shuts off some subset of neurons every pass, thus training ensemble of subnetworks which is then merged
