@@ -58,7 +58,7 @@ if __name__ == '__main__':
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   maxNewTokens = 10000
   nEmbed = 384 # embedding dimensions (intermediate step)
-  # should be equal to nEmbed to execute multiple iteration of blocks (output of self attention back into input)
+  # should be equal to nEmbed to execute multiple iteration of blocks (output of self-attention back into input)
   attentionHeadSize = nEmbed # head size for one head of self-attention
   attentionNumHeads = 6 # number of self-attention heads to run in parallel
   numLayers = 6 # number of block layers
@@ -74,7 +74,7 @@ if __name__ == '__main__':
   data = [] # list of (prompt, answer) tuple for training/testing
   currentPrompt = [] # prompt of the current line
   for line in text.splitlines():  # go line by line (prompt and answer is separated by \n)
-    if (len(currentPrompt) == 0): # if prompt is not set then we set it
+    if len(currentPrompt) == 0: # if prompt is not set then we set it
       currentPrompt = torch.tensor(lm.encode(line), dtype=torch.long)
     else: # if prompt is set then we add the (prompt, answer) tuple to data
       data.append((currentPrompt, torch.tensor(lm.encode(line), dtype=torch.long)))
