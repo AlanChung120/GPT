@@ -36,14 +36,14 @@ class AttentionHead(nn.Module):
   # if external provided then it is cross-attention from external otherwise it is self-attention
   def forward(self, x, mask, external=None):
     # B = batch size (compute in parallel)
-    # T = time, block size, sequential characters in a context chunk
+    # T = time, block size, sequential characters in a context chunk (=S if encoder block attention)
     # C = channel, nEmbed (also headSize in most cases)
     B, T, C = x.shape
 
     # if encoder output provided
     if external:
       # B = batch size (compute in parallel)
-      # S = encoder input size
+      # S = encoder input size, prompt size
       # C = channel, nEmbed (also headSize in most cases)
       B, S, C = external.shape
 
@@ -79,7 +79,7 @@ class MultiHeadAttention(nn.Module):
     and decode them into the output
   """
   # nEmbed is the dimension of the inputs (previously calculated) into attention (embedding dimension)
-  # blockSize T: number of time, sequential characters in a context chunk
+  # blockSize T: number of time, sequential characters in a context chunk (=S if encoder block attention)
   def __init__(self, numHeads, headSize, nEmbed, blockSize, dropout):
     super().__init__()
     # smaller head size for multi-head attention
@@ -92,7 +92,7 @@ class MultiHeadAttention(nn.Module):
     # dropout randomly shuts off some subset of neurons every pass, thus training ensemble of subnetworks which is then merged
     self.dropout = nn.Dropout(dropout)
   
-  # run multiple single head of attention in paraellel (B, T, C) -> (B, T, headSize)
+  # run multiple single head of attention in paraellel (B, T/S, C) -> (B, T/S, headSize)
   def forward(self, x, mask, external=None):
     # run multiple single head of attention and concatenate the outputs over the channel dimension (C)
     out = torch.cat([head(x, mask, external) for head in self.heads], dim=-1)

@@ -5,7 +5,7 @@ from feedForward import FeedForward
 
 class DecoderBlock(nn.Module):
   """
-  A class used to represent a transformer block to repeat: communication (attention) followed by computation (feedforward)
+  A class used to represent a decoder transformer block to repeat: communication (attention) followed by computation (feedforward)
   """
   
   # nEmbed is the dimension of the inputs (previously calculated) into self-attention (embedding dimension)
@@ -38,7 +38,7 @@ class DecoderBlock(nn.Module):
     # network learns the residuals (difference between input and output) rather than the output itself
     # apply layer norm before transformation (changed from the original transformer model)
     x = x + self.saHeads(self.layerNorm1(x), True) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
-    # apply a cross attention
+    # apply multiple heads of cross attention
     x = x + self.caHeads(self.layerNorm2(x), False, external) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     # apply a feed forward network
     x = x + self.feedForward(self.layerNorm3(x))  # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
