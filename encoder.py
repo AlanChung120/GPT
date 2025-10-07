@@ -12,13 +12,11 @@ class Encoder(nn.Module):
   # required: nEmbed = headSize (input into output for blocks)
   def __init__(self, nEmbed, vocabSize, blockSize, headSize, numHeads, numLayers, dropout):
     super().__init__()
-    # initialize the embedding table to initial values p = 1/C -> logit(p) = log(1/C / (1 - (1/C))) = log(1/(C - 1))
-    # logits: scores/confidence level in the next token but instead of probablilties (0,1) it maps to real numbers (-inf, inf)
-    # making regression easier (negative = 0.5 >, positive = 0.5 < , zero = 0.5)
-    # (1) -> (1 * C)
-    # object representing a look up table of vocabSize by nEmbed that stores the nEmbed logits for all possible prompt tokens
+    # Object representing a look up table of vocabSize by nEmbed that stores the learned nEmbed vectors (identity/information on each token) 
+    # for all possible tokens (vocabSize). Stores different semantics like similar meanings (run = sprint),
+    # verbs/adjective/subjects, subword information (un happy ness), relational information (king - man + woman = queen)
     self.tokenEmbeddingTable = nn.Embedding(vocabSize, nEmbed) # (vocabSize, C) encode token identity
-    # object representing a look up table of blockSize by nEmbed that stores the nEmbed logits for all possible token positions
+    # Object representing a look up table of blockSize by nEmbed that stores the nEmbed vectors for all possible token positions (1, 2, ..., encoder size S)
     self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (S, C) encode token position
     # multiple iteration of self-attention (communication) and feed forward (computation) blocks to intersperse them
     self.blocks = nn.Sequential(*[EncoderBlock(headSize, numHeads, nEmbed, blockSize, dropout) for _ in range(numLayers)]) # numLayers * (B, S, nEmbed/headSize) 
