@@ -44,6 +44,8 @@ if __name__ == '__main__':
   torch.manual_seed(1337) # set seed for consistency
 
   # hyperparameters----------------------------------------------------------------------------------
+  # maximum input of encoder length/prompt length
+  MAXCONTEXTLENGTH = 4096
   # train in chunks for efficiency
   batchSize = 64 # independent chunks to process in parallel (GPU efficient)
   # context-target based chunk training: the chunk contains information for every element in the chunk,
