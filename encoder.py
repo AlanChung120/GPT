@@ -31,13 +31,13 @@ class Encoder(nn.Module):
     B, S = prompts.shape
 
     # prompts is (B, S)
-    # returns a (B, S, headSize) tensor given the prompts by getting positional and identity embeddings returned by the embedding tables by going 
-    # through all the prompts tokens in prompts and all the positions and adding the embeddings and converting to vocabSize logits for the tokens
-    # get preceding token (prompts) embedding by inputting prompts into tokenEmbeddingTable
+    # returns a (B, S, C) tensor given the prompts by getting positional and identity embeddings returned by the embedding tables by going 
+    # through all the prompts tokens in prompts and all the positions and adding the embeddings
+    # get prompts embedding by inputting prompts into tokenEmbeddingTable
     tokenEmbedding = self.tokenEmbeddingTable(prompts) # (B, S) -> (B, S, C)
     # get positional embedding by inputting (0, 1, .., S - 1) tensor into the positionEmbeddingTable
     positionEmbedding = self.positionEmbeddingTable(torch.arange(S, device=device)) # (S) -> (S, C)
-    # encode both positional and prececing token (prompts) embedding 
+    # encode both positional and identity embedding 
     x = tokenEmbedding + positionEmbedding # (B, S, C) + (B (B copies of positionEmbedding automatically added), S, C) = (B, S, C)
     # run the transformer blocks
     x = self.blocks(x) # (B, S, C) -> (B, S, headSize)

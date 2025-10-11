@@ -40,19 +40,19 @@ class Decoder(nn.Module):
     B, T = contexts.shape
 
     # contexts and targets are (B, T) -> for given context token contexts[i][j] the target token is targets[i][j]
-    # returns a (B, T, vocabSize) tensor given the contexts by getting positional and identity embeddings returned by the embedding tables by going 
-    # through all the context tokens in contexts and all the positions and adding the embeddings and converting to vocabSize logits for next possible tokens
+    # returns a (B, T, C) tensor given the contexts by getting positional and identity embeddings returned by the embedding tables by going 
+    # through all the context tokens in contexts and all the positions and adding the embeddings
     # get preceding token (context) embedding by inputting contexts into tokenEmbeddingTable
     tokenEmbedding = self.tokenEmbeddingTable(contexts) # (B, T) -> (B, T, C)
     # get positional embedding by inputting (0, 1, .., T - 1) tensor into the positionEmbeddingTable
     positionEmbedding = self.positionEmbeddingTable(torch.arange(T, device=device)) # (T) -> (T, C)
-    # encode both positional and prececing token (context) embedding 
+    # encode both positional and identity embedding 
     x = tokenEmbedding + positionEmbedding # (B, T, C) + (B (B copies of positionEmbedding automatically added), T, C) = (B, T, C)
     # run the transformer blocks
     x = self.blocks(x, external) # (B, T, C) -> (B, T, headSize)
     # run the layer norm
     x = self.layerNorm(x) # (B, T, headSize) -> (B, T, headSize)
-    # convert headSize (which is C and nEmbed in most cases) dimension back to vocabSize dimension to get the logits for all possible next tokens
+    # convert headSize (which is C and nEmbed in most cases) dimension to vocabSize dimension to get the logits for all possible next tokens
     logits = self.lmHead(x) # (B, T, headSize) -> (B, T, vocabSize)
 
     if targets is None:
