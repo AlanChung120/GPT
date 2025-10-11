@@ -18,23 +18,23 @@ class AttentionHead(nn.Module):
     if key and query vector match (key is what query is looking for) higher the dot product (same high components), higher the affinity, higher the weight (relative))
   """
 
-  def __init__(self, headSize, nEmbed, blockSize, dropout):
+  def __init__(self, headSize, nEmbed, dropout, blockSize=None):
     super().__init__()
     # headSize is the size of the key/query vectors
     # Arbitrary module to learn the weights to convert to appropriate vectors
     self.key = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the key vector (no bias = matrix multiply with some fixed weights)
     self.query = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the query vector (no bias = matrix multiply with some fixed weights)
     self.value = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the value vector (no bias = matrix multiply with some fixed weights)
-    # register buffer (not a parameter) a T by T lower triangular 1s matrix where 1s represents the entries that are allowed to communicate 
-    # only used when mask = true (decoder block self-attention)
-    self.register_buffer('tril', torch.tril(torch.ones(blockSize, blockSize)))
+    # register buffer (not a learnable parameter) a T by T lower triangular 1s matrix where 1s represents the entries that are allowed to communicate 
+    # only used when blockSize is not None (decoder block self-attention) because blockSize is only used to create tril
+    self.register_buffer('tril', torch.tril(torch.ones(blockSize, blockSize)) if blockSize is not None else None)
     # dropout is a regularization technique to prevent overfitting
     # dropout randomly shuts off some subset of neurons every pass, thus training ensemble of subnetworks which is then merged
     self.dropout = nn.Dropout(dropout)
   
   # Forward pass of a singular head of attention (B, T, C) -> (B, T, headSize) 
   # if external provided then it is cross-attention from external otherwise it is self-attention
-  def forward(self, x, mask, external=None):
+  def forward(self, x, external=None):
     # B = batch size (compute in parallel)
     # T = time, block size, sequential characters in a context chunk (=S if encoder block attention)
     # C = channel, nEmbed (also headSize in most cases)
@@ -60,9 +60,9 @@ class AttentionHead(nn.Module):
     # scaled attention divides weightMatrix by sqrt(headSize) which will scale weightMatrix variance to query and key variance (control the variance)
     # which then the softmax will stay diffuse and not saturate too much to the extreme (converge to one hot vector)
     weightMatrix = q @ k.transpose(-2, -1) * headSize**-0.5 # transpose last two dimensions: (B, T, headSize) @ (B, headSize, T/S) -> (B, T, T/S) B T by T/S matrices
-    # If mask (decoder block self-attention) filter/mask appropriately using tril matrix set above (encoder/decoder step)
+    # If tril is set (decoder block self-attention) filter/mask appropriately using tril matrix set above (encoder/decoder step)
     # filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
-    if mask:
+    if self.tril is not None:
       weightMatrix = weightMatrix.masked_fill(self.tril[:T, :T] == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
     # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
     weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence) (B, T, T/S)
@@ -79,13 +79,13 @@ class MultiHeadAttention(nn.Module):
     and decode them into the output
   """
   # nEmbed is the dimension of the inputs (previously calculated) into attention (embedding dimension)
-  # blockSize T: number of time, sequential characters in a context chunk (=S if encoder block attention)
-  def __init__(self, numHeads, headSize, nEmbed, blockSize, dropout):
+  # blockSize T: number of time, sequential characters in a context chunk
+  def __init__(self, numHeads, headSize, nEmbed, dropout, blockSize=None):
     super().__init__()
     # smaller head size for multi-head attention
     multiHeadSize = headSize // numHeads
     # multiple smaller single head of attention in paraellel (numHeads * multiHeadSize = headSize for channel dimension consistency)
-    self.heads = nn.ModuleList((AttentionHead(multiHeadSize, nEmbed, blockSize, dropout)) for _ in range(numHeads)) 
+    self.heads = nn.ModuleList((AttentionHead(multiHeadSize, nEmbed, dropout, blockSize)) for _ in range(numHeads)) 
     # Linear Projection of the outcome back into the residual pathway
     self.proj = nn.Linear(headSize, headSize)
     # dropout is a regularization technique to prevent overfitting, dropout right before residual connection into residual pathway 
@@ -93,9 +93,9 @@ class MultiHeadAttention(nn.Module):
     self.dropout = nn.Dropout(dropout)
   
   # run multiple single head of attention in paraellel (B, T/S, C) -> (B, T/S, headSize)
-  def forward(self, x, mask, external=None):
+  def forward(self, x, external=None):
     # run multiple single head of attention and concatenate the outputs over the channel dimension (C)
-    out = torch.cat([head(x, mask, external) for head in self.heads], dim=-1)
+    out = torch.cat([head(x, external) for head in self.heads], dim=-1)
     # perform Linear Projection of the outcome back into the residual pathway and dropout
     out = self.dropout(self.proj(out))
     return out

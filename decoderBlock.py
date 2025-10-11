@@ -11,12 +11,12 @@ class DecoderBlock(nn.Module):
   # nEmbed is the dimension of the inputs (previously calculated) into self-attention (embedding dimension)
   # required: nEmbed = headSize (input into output)
   # blockSize T: number of time, sequential characters in a context chunk
-  def __init__(self, headSize, numHeads, nEmbed, blockSize, dropout):
+  def __init__(self, headSize, numHeads, nEmbed, dropout, blockSize=None):
     super().__init__()
     # numHeads heads of smaller one head of self-attention models to apply multiple parallel one head of self-attentions (communication)
-    self.saHeads = MultiHeadAttention(numHeads, headSize, nEmbed, blockSize, dropout) # (B, T, headSize)
+    self.saHeads = MultiHeadAttention(numHeads, headSize, nEmbed, dropout, blockSize) # (B, T, headSize)
     # numHeads heads of smaller one head of cross-attention models to apply multiple parallel one head of cross-attentions (communication with encoder)
-    self.caHeads = MultiHeadAttention(numHeads, headSize, nEmbed, blockSize, dropout) # (B, T, headSize)
+    self.caHeads = MultiHeadAttention(numHeads, headSize, nEmbed, dropout) # (B, T, headSize)
     # a simple feed forward network (computation)
     self.feedForward = FeedForward(headSize, dropout) # results are same dimensions: (B, T, headSize)
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
@@ -37,9 +37,9 @@ class DecoderBlock(nn.Module):
     # fork off do calculations (not taking the shortcut), comeback and add (project) to original input (residual pathway/connection)
     # network learns the residuals (difference between input and output) rather than the output itself
     # apply layer norm before transformation (changed from the original transformer model)
-    x = x + self.saHeads(self.layerNorm1(x), True) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
+    x = x + self.saHeads(self.layerNorm1(x)) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     # apply multiple heads of cross attention
-    x = x + self.caHeads(self.layerNorm2(x), False, external) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
+    x = x + self.caHeads(self.layerNorm2(x), external) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     # apply a feed forward network
     x = x + self.feedForward(self.layerNorm3(x))  # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     return x # (B, T, headSize)

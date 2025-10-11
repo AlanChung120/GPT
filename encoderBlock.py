@@ -9,11 +9,10 @@ class EncoderBlock(nn.Module):
   
   # nEmbed is the dimension of the inputs (previously calculated) into self-attention (embedding dimension)
   # required: nEmbed = headSize (input into output)
-  # blockSize S: number of sequential characters in a prompt
-  def __init__(self, headSize, numHeads, nEmbed, blockSize, dropout):
+  def __init__(self, headSize, numHeads, nEmbed, dropout):
     super().__init__()
     # numHeads heads of smaller one head of self-attention models to apply multiple parallel one head of self-attentions (communication)
-    self.saHeads = MultiHeadAttention(numHeads, headSize, nEmbed, blockSize, dropout) # (B, S, headSize)
+    self.saHeads = MultiHeadAttention(numHeads, headSize, nEmbed, dropout) # (B, S, headSize)
     # a simple feed forward network (computation)
     self.feedForward = FeedForward(headSize, dropout) # results are same dimensions: (B, S, headSize)
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
@@ -32,7 +31,7 @@ class EncoderBlock(nn.Module):
     # fork off do calculations (not taking the shortcut), comeback and add (project) to original input (residual pathway/connection)
     # network learns the residuals (difference between input and output) rather than the output itself
     # apply layer norm before transformation (changed from the original transformer model)
-    x = x + self.saHeads(self.layerNorm1(x), False) # (B, S, C/nEmbed/headSize) (residual pathway) + (B, S, headSize) (fork off) = (B, S, headSize)
+    x = x + self.saHeads(self.layerNorm1(x)) # (B, S, C/nEmbed/headSize) (residual pathway) + (B, S, headSize) (fork off) = (B, S, headSize)
     # apply a feed forward network
     x = x + self.feedForward(self.layerNorm2(x))  # (B, S, C/nEmbed/headSize) (residual pathway) + (B, S, headSize) (fork off) = (B, S, headSize)
     return x # (B, S, headSize)

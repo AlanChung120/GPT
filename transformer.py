@@ -10,24 +10,24 @@ class Transformer(nn.Module):
   A class used to represent a transformer model (encoder + decoder model, see tranformer_model.png)
   """
   # required: nEmbed = headSize (input into output for blocks)
-  def __init__(self, nEmbed, vocabSize, blockSize, headSize, numHeads, numLayers, dropout):
+  def __init__(self, nEmbed, vocabSize, maxEncoderSize, blockSize, headSize, numHeads, numLayers, dropout):
     super().__init__()
     # encoder model (see encoder.py)
-    self.encoder = Encoder(nEmbed, vocabSize, blockSize, headSize, numHeads, numLayers, dropout)
+    self.encoder = Encoder(nEmbed, vocabSize, maxEncoderSize, headSize, numHeads, numLayers, dropout)
     # decoder model (see decoder.py)
     self.decoder = Decoder(nEmbed, vocabSize, blockSize, headSize, numHeads, numLayers, dropout)
 
-  # forward function is implicitly called when the instance (object) is called directly (B, T) -> (B, T, vocabSize)
-  # forward pass/evaluation of the model ->  prompts (B, T) is the encoder input, contexts (B, T) and targets (B, T) is the decoder input
+  # forward function is implicitly called when the instance (object) is called directly (B, S) and (B, T) -> (B, T, vocabSize)
+  # forward pass/evaluation of the model -> prompts (B, S) is the encoder input, contexts (B, T) and targets (B, T) is the decoder input
   def forward(self, device, prompts, contexts, targets=None):
     # run the encoder to get the encoded prompt to input to the decoder (see encoder.py)
-    encodedPrompts = self.encoder(device, prompts) # (B, T) -> (B, T, vocabSize)
+    encodedPrompts = self.encoder(device, prompts) # (B, S) -> (B, S, headSize)
     # run the decoder (see decoder.py)
-    logits, loss = self.decoder(device, contexts, targets, encodedPrompts) # (B, T) and (B, T, vocabSize) -> (B, T, vocabSize)
+    logits, loss = self.decoder(device, contexts, targets, encodedPrompts) # (B, T) and (B, S, headSize) -> (B, T, vocabSize)
 
     return logits, loss
   
-  # generate maxNewTokens tokens given prompt tokens prompts (B, T) and context tokens contexts (B, T) 
+  # generate maxNewTokens tokens given prompt tokens prompts (B, S) and context tokens contexts (B, T) 
   def generate(self, prompts, contexts, maxNewTokens, blockSize, device):
     seq = contexts # initialize the sequence of tokens with the current context
     # generate batchSize next tokens in parallel for maxNewTokens tokens

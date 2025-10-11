@@ -10,22 +10,22 @@ class Encoder(nn.Module):
   for cross-head attention for decoder
   """
   # required: nEmbed = headSize (input into output for blocks)
-  def __init__(self, nEmbed, vocabSize, blockSize, headSize, numHeads, numLayers, dropout):
+  def __init__(self, nEmbed, vocabSize, maxEncoderSize, headSize, numHeads, numLayers, dropout):
     super().__init__()
     # Object representing a look up table of vocabSize by nEmbed that stores the learned nEmbed vectors (identity/information on each token) 
     # for all possible tokens (vocabSize). Stores different semantics like similar meanings (run = sprint),
     # verbs/adjective/subjects, subword information (un happy ness), relational information (king - man + woman = queen)
     self.tokenEmbeddingTable = nn.Embedding(vocabSize, nEmbed) # (vocabSize, C) encode token identity
-    # Object representing a look up table of blockSize by nEmbed that stores the nEmbed vectors for all possible token positions (1, 2, ..., encoder size S)
-    self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (S, C) encode token position
+    # Object representing a look up table of maxEncoderSize by nEmbed that stores the nEmbed vectors for all possible token positions (1, 2, ..., maxEncoderSize)
+    self.positionEmbeddingTable = nn.Embedding(maxEncoderSize, nEmbed) # (maxEncoderSize, C) encode token position
     # multiple iteration of self-attention (communication) and feed forward (computation) blocks to intersperse them
-    self.blocks = nn.Sequential(*[EncoderBlock(headSize, numHeads, nEmbed, blockSize, dropout) for _ in range(numLayers)]) # numLayers * (B, S, nEmbed/headSize) 
+    self.blocks = nn.Sequential(*[EncoderBlock(headSize, numHeads, nEmbed, dropout) for _ in range(numLayers)]) # numLayers * (B, S, nEmbed/headSize) 
 
   # forward function is implicitly called when the instance (object) is called directly (B, S) -> (B, S, vocabSize)
   # forward pass/evaluation of the model -> prompts is the input
   def forward(self, device, prompts):
     # B = batch size (compute in parallel)
-    # S = prompt size, sequential characters in the prompt
+    # S = prompt size, sequential characters in the prompt (!= maxEncoderSize becasue S can be less)
     # C = channel, nEmbed (=headSize in this case)
     # vocabSize = all possible next tokens
     B, S = prompts.shape
