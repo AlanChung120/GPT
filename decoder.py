@@ -17,8 +17,8 @@ class Decoder(nn.Module):
     # but instead of probablilties (0,1) it maps to real numbers (-inf, inf) which eases regression. Also stores different semantics like similar meanings (run = sprint),
     # verbs/adjective/subjects, subword information (un happy ness), relational information (king - man + woman = queen)
     self.tokenEmbeddingTable = nn.Embedding(vocabSize, nEmbed) # (vocabSize, C) encode token identity
-    # Object representing a look up table of blockSize by nEmbed that stores the nEmbed vectors for all possible token positions (1, 2, ..., blockSize T)
-    self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (T, C) encode token position
+    # Object representing a look up table of blockSize by nEmbed that stores the nEmbed vectors for all possible token positions (1, 2, ..., blockSize)
+    self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (blockSize, C) encode token position
     # multiple iteration of self-attention/cross-attention (communication) and feed forward (computation) blocks to intersperse them
     self.blocks = nn.Sequential(*[DecoderBlock(headSize, numHeads, nEmbed, dropout, blockSize) for _ in range(numLayers)]) # numLayers * (B, T, nEmbed/headSize) 
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
