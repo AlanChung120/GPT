@@ -36,7 +36,7 @@ class AttentionHead(nn.Module):
   # if external provided then it is cross-attention from external otherwise it is self-attention
   def forward(self, x, external=None):
     # B = batch size (compute in parallel)
-    # T = time, block size, sequential characters in a context chunk (=S if encoder block attention)
+    # T = time, block size (most cases unless it's smaller), sequential characters in a context chunk (=S if encoder block attention)
     # C = channel, nEmbed (also headSize in most cases)
     B, T, C = x.shape
 

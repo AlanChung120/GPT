@@ -22,7 +22,7 @@ class BigramModel(nn.Module):
   # forward pass/evaluation of the model -> contexts is the input, targets is the target output
   def forward(self, contexts, targets=None):
     # B = batch size (compute in parallel)
-    # T = time, block size, sequential characters in a context chunk
+    # T = time, block size (most cases unless it's smaller), sequential characters in a context chunk
     # C = channel, all possible next tokens, vocabSize
 
     # contexts and targets are (B, T) -> for given context token contexts[i][j] the target token is targets[i][j]
