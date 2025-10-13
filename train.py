@@ -11,7 +11,7 @@ def getBatch(type):
   for _ in range(0, batchSize):
     promptIdx = torch.randint(len(data)) # index for the random (prompt, answer) tuple
     promptIndices.append(promptIdx)
-    answerBlockSize = min(blockSize, len(data[promptIdx][1])) # make sure blocksize don't go over length of the answer tensor
+    answerBlockSize = min(blockSize, len(data[promptIdx][1])) # make sure blocksize don't go over length of the answer tensor (answers can be less length than blockSize)
     indices.append(torch.randint(len(data[promptIdx][1]) - answerBlockSize)) # random starting index for the answer tensor
     blockSizes.append(answerBlockSize)
   prompts = torch.stack([data[promptIdx][0] for promptIdx in promptIndices])

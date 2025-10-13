@@ -25,7 +25,7 @@ class AttentionHead(nn.Module):
     self.key = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the key vector (no bias = matrix multiply with some fixed weights)
     self.query = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the query vector (no bias = matrix multiply with some fixed weights)
     self.value = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the value vector (no bias = matrix multiply with some fixed weights)
-    # register buffer (not a learnable parameter) a T by T lower triangular 1s matrix where 1s represents the entries that are allowed to communicate 
+    # register buffer (not a learnable parameter) a blockSize by blockSize lower triangular 1s matrix where 1s represents the entries that are allowed to communicate 
     # only used when blockSize is not None (decoder block self-attention) because blockSize is only used to create tril
     self.register_buffer('tril', torch.tril(torch.ones(blockSize, blockSize)) if blockSize is not None else None)
     # dropout is a regularization technique to prevent overfitting
@@ -61,6 +61,7 @@ class AttentionHead(nn.Module):
     # which then the softmax will stay diffuse and not saturate too much to the extreme (converge to one hot vector)
     weightMatrix = q @ k.transpose(-2, -1) * headSize**-0.5 # transpose last two dimensions: (B, T, headSize) @ (B, headSize, T/S) -> (B, T, T/S) B T by T/S matrices
     # If tril is set (decoder block self-attention) filter/mask appropriately using tril matrix set above (encoder/decoder step)
+    # tril is shrunk to T dimension (for T < blockSize case but T = blockSize most cases) but still keeps the lower triangle 1s matrix form
     # filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
     if self.tril is not None:
       weightMatrix = weightMatrix.masked_fill(self.tril[:T, :T] == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
