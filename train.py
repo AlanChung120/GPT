@@ -1,6 +1,7 @@
 import torch
 from languageModel import LanguageModel
 from transformer import Transformer
+import pickle
 
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
@@ -109,21 +110,21 @@ if __name__ == '__main__':
     loss.backward() # calculate back propagation (gradients (derivative of loss function wrt parameter) for all the parameters)
     optimizer.step() # step (optimize parameters) towards negative of gradient (calculated in the previous step) scaled with learning rate
 
-  # generate from the model
-  context = torch.zeros((1, 1), dtype=torch.long, device=device) # feed the new line character "\n" (0) as the starting sequence/context
-  # write the output to a file
-  with open("output.txt", "w") as file:
-    file.write(lm.decode(model.generate(context, maxNewTokens, blockSize, device)[0].tolist())) # generate from the initial context get the first batch and decode it
+  # save language model
+  with open("lm.pkl", "wb") as file:
+    pickle.dump(lm, file)
+  print("Language Model saved to lm.pkl")
   
   # training data to save
   trainingData = {
     "model_state": model.state_dict(),
-    "batchSize": batchSize,
+    "max_context_length": MAXCONTEXTLENGTH,
     "blockSize": blockSize,
     "nEmbed": nEmbed,
     "attentionHeadSize": attentionHeadSize,
     "attentionNumHeads": attentionNumHeads,
-    "numLayers": numLayers
+    "numLayers": numLayers,
+    "dropout": dropout,
   }
 
   # save to a py torch file

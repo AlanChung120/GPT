@@ -44,3 +44,23 @@ class Transformer(nn.Module):
       nextTokens = torch.multinomial(probs, num_samples=1) # (B, 1)
       seq = torch.cat((seq, nextTokens), dim=1) # append the next token to the running sequence (B, T+1)
     return seq # (B, T + maxNewTokens)
+  
+
+  # generate until end of sequence token (eosToken) given prompt tokens prompts (1, S) and context tokens contexts (1, T) (no batchSize parallel work)
+  def generateUntil(self, prompts, contexts, eosToken, blockSize, device):
+    seq = contexts # initialize the sequence of tokens with the current context
+    while True:
+      # crop seq to get last blockSize tokens for the positionEmbeddingTable (otherwise it will run out of scope; it only has embeddings for blockSize)
+      seqBlock = seq[:,-blockSize:] # (1, blockSize, vocabSize)
+      # get the predictions in the form of logits
+      logits, loss = self(device, prompts, seqBlock) # call the forward function
+      # get the most recent (last time step) token
+      lastLogits = logits[:, -1, :] # (1, 1, vocabSize)
+      # convert the logits into probabilities using softmax (logits for each vocabSize -> probability distribution of length vocabSize)
+      probs = F.softmax(lastLogits, dim=-1) # (1, 1, vocabSize)
+      # sample from the probability distribution (of length vocabSize) so we have a sampled next token for each batch
+      nextTokens = torch.multinomial(probs, num_samples=1) # (1, 1)
+      seq = torch.cat((seq, nextTokens), dim=1) # append the next token to the running sequence (1, T+1)
+      if (nextTokens[0, 0] == eosToken):
+        break
+    return seq # (1, T + new tokens)
