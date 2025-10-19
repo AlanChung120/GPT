@@ -13,8 +13,8 @@ if __name__ == '__main__':
     lm = pickle.load(file)
 
   # load parameters
-  modelState = trainingData["model_state"]
-  MAXCONTEXTLENGTH = trainingData["max_context_length"]
+  modelState = trainingData["modelState"]
+  MAXCONTEXTLENGTH = trainingData["maxContextLength"]
   blockSize = trainingData["blockSize"]
   nEmbed = trainingData["nEmbed"]
   attentionHeadSize = trainingData["attentionHeadSize"]
@@ -41,12 +41,13 @@ if __name__ == '__main__':
       break
     elif len(prompt) > MAXCONTEXTLENGTH:
       print("Prompt is too long. Try again")
+      continue
 
     encodedPrompt = torch.tensor(lm.encode(prompt), dtype=torch.long)
 
     encodedPrompt = encodedPrompt.to(device)
 
-    # generate from the model
+    # generate from the model (\n is the beginning of the sequence and end of the sequence token for decoder (generator))
     context = torch.zeros((1, 1), dtype=torch.long, device=device) # feed the new line character "\n" (0) as the starting sequence/context
     eosToken = 0 # set the new line character "\n" (0) as the ending token
     response = lm.decode(model.generateUntil(encodedPrompt , context, eosToken, blockSize, device)[0].tolist()) # generate from the initial context get the first batch and decode it

@@ -59,7 +59,6 @@ if __name__ == '__main__':
   learningRate = 3e-4 # bigger the neural network the lower
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
-  maxNewTokens = 10000
   nEmbed = 384 # embedding dimensions (intermediate step)
   # should be equal to nEmbed to execute multiple iteration of blocks (output of self-attention back into input)
   attentionHeadSize = nEmbed # head size for one head of self-attention
@@ -67,7 +66,7 @@ if __name__ == '__main__':
   numLayers = 6 # number of block layers
   dropout = 0.2 # dropout rate
 
-  # read in the file (1,000,000 characters) can change
+  # read in the file
   with open('input.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
@@ -117,8 +116,8 @@ if __name__ == '__main__':
   
   # training data to save
   trainingData = {
-    "model_state": model.state_dict(),
-    "max_context_length": MAXCONTEXTLENGTH,
+    "modelState": model.state_dict(),
+    "maxContextLength": MAXCONTEXTLENGTH,
     "blockSize": blockSize,
     "nEmbed": nEmbed,
     "attentionHeadSize": attentionHeadSize,
