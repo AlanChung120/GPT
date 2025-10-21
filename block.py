@@ -10,7 +10,7 @@ class Block(nn.Module):
   # nEmbed is the dimension of the inputs (previously calculated) into self-attention (embedding dimension)
   # required: nEmbed = headSize (input into output)
   # blockSize T: number of time, sequential characters in a context chunk
-  def __init__(self, headSize, numHeads, nEmbed, dropout, blockSize=None):
+  def __init__(self, headSize, numHeads, nEmbed, dropout, blockSize):
     super().__init__()
     # numHeads heads of smaller one head of self-attention models to apply multiple parallel one head of self-attentions (communication)
     self.saHeads = MultiHeadAttention(numHeads, headSize, nEmbed, dropout, blockSize) # (B, T, headSize)

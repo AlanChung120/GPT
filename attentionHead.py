@@ -18,7 +18,7 @@ class AttentionHead(nn.Module):
     if key and query vector match (key is what query is looking for) higher the dot product (same high components), higher the affinity, higher the weight (relative))
   """
 
-  def __init__(self, headSize, nEmbed, dropout, blockSize=None):
+  def __init__(self, headSize, nEmbed, dropout, blockSize):
     super().__init__()
     # headSize is the size of the key/query vectors
     # Arbitrary module to learn the weights to convert to appropriate vectors
@@ -26,8 +26,7 @@ class AttentionHead(nn.Module):
     self.query = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the query vector (no bias = matrix multiply with some fixed weights)
     self.value = nn.Linear(nEmbed, headSize, bias=False) # Linear module (nEmbed, headSize) for the value vector (no bias = matrix multiply with some fixed weights)
     # register buffer (not a learnable parameter) a blockSize by blockSize lower triangular 1s matrix where 1s represents the entries that are allowed to communicate 
-    # only used when blockSize is not None (decoder block self-attention) because blockSize is only used to create tril
-    self.register_buffer('tril', torch.tril(torch.ones(blockSize, blockSize)) if blockSize is not None else None)
+    self.register_buffer('tril', torch.tril(torch.ones(blockSize, blockSize)))
     # dropout is a regularization technique to prevent overfitting
     # dropout randomly shuts off some subset of neurons every pass, thus training ensemble of subnetworks which is then merged
     self.dropout = nn.Dropout(dropout)
@@ -50,11 +49,9 @@ class AttentionHead(nn.Module):
     # scaled attention divides weightMatrix by sqrt(headSize) which will scale weightMatrix variance to query and key variance (control the variance)
     # which then the softmax will stay diffuse and not saturate too much to the extreme (converge to one hot vector)
     weightMatrix = q @ k.transpose(-2, -1) * headSize**-0.5 # transpose last two dimensions: (B, T, headSize) @ (B, headSize, T) -> (B, T, T) B T by T matrices
-    # If tril is set (decoder block self-attention) filter/mask appropriately using tril matrix set above (encoder/decoder step)
-    # tril is shrunk to T dimension (for T < blockSize case but T = blockSize most cases) but still keeps the lower triangle 1s matrix form
+    # Filter/mask appropriately using tril matrix set above
     # filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
-    if self.tril is not None:
-      weightMatrix = weightMatrix.masked_fill(self.tril[:T, :T] == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
+    weightMatrix = weightMatrix.masked_fill(self.tril[:T, :T] == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
     # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
     weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence) (B, T, T)
     # perform dropout (randomly prevent some nodes from communicating)
@@ -72,7 +69,7 @@ class MultiHeadAttention(nn.Module):
   """
   # nEmbed is the dimension of the inputs (previously calculated) into self-attention (embedding dimension)
   # blockSize T: number of time, sequential characters in a context chunk
-  def __init__(self, numHeads, headSize, nEmbed, dropout, blockSize=None):
+  def __init__(self, numHeads, headSize, nEmbed, dropout, blockSize):
     super().__init__()
     # smaller head size for multi-head self attention
     multiHeadSize = headSize // numHeads
