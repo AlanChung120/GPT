@@ -5,7 +5,7 @@ torch.manual_seed(1337) # set seed for consistency
 
 class AttentionHead(nn.Module):
   """
-  A class used to represent a one head of attention (self when keys and values all come from the same source as queries (x) otherwise it is cross-attention)
+  A class used to represent a one head of self-attention (self because keys and values all come from the same source as queries (x) otherwise it is cross-attention)
     Attention is communication mechanism of a directed graph that aggregates via the weighted sum from all nodes that point to them (all the preceding tokens in our case)
     no notion of space, just set of vectors and we postionally encode them (positionEmbeddingTable)
     - self-attention (keys and values are produced from the same source as queries) 
