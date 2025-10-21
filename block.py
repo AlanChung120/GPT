@@ -10,10 +10,10 @@ class Block(nn.Module):
   # nEmbed is the dimension of the inputs (previously calculated) into self-attention (embedding dimension)
   # required: nEmbed = headSize (input into output)
   # blockSize T: number of time, sequential characters in a context chunk
-  def __init__(self, headSize, numHeads, nEmbed, blockSize, dropout, attentionMask):
+  def __init__(self, headSize, numHeads, nEmbed, dropout, blockSize=None):
     super().__init__()
     # numHeads heads of smaller one head of self-attention models to apply multiple parallel one head of self-attentions (communication)
-    self.saHeads = MultiHeadAttention(numHeads, headSize, nEmbed, blockSize, dropout, attentionMask) # (B, T, headSize)
+    self.saHeads = MultiHeadAttention(numHeads, headSize, nEmbed, dropout, blockSize) # (B, T, headSize)
     # a simple feed forward network (computation)
     self.feedForward = FeedForward(headSize, dropout) # results are same dimensions: (B, T, headSize)
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
