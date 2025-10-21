@@ -1,6 +1,7 @@
 import torch
 from languageModel import LanguageModel
-from bigramV2 import BigramModel
+from decoder import Decoder
+import pickle
 
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
@@ -49,7 +50,7 @@ if __name__ == '__main__':
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   maxNewTokens = 10000
   nEmbed = 384 # embedding dimensions (intermediate step)
-  # should be equal to nEmbed to execute multiple iteration of blocks (output of self attention back into input)
+  # should be equal to nEmbed to execute multiple iteration of blocks (output of self-attention back into input)
   attentionHeadSize = nEmbed # head size for one head of self-attention
   attentionNumHeads = 6 # number of self-attention heads to run in parallel
   numLayers = 6 # number of block layers
@@ -69,7 +70,7 @@ if __name__ == '__main__':
   trainData = data[:split]
   valData = data[split:]
   
-  model = BigramModel(nEmbed, lm.vocabSize, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
+  model = Decoder(nEmbed, lm.vocabSize, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
   # optimizer: method of updating the parameters using the gradients, ADAM (adaptive learning rate)
   optimizer = torch.optim.AdamW(model.parameters(), lr=learningRate)
 
@@ -96,3 +97,25 @@ if __name__ == '__main__':
   # write the output to a file
   with open("output.txt", "w") as file:
     file.write(lm.decode(model.generate(context, maxNewTokens, blockSize, device)[0].tolist())) # generate from the initial context get the first batch and decode it
+
+   # save language model
+  with open("lm.pkl", "wb") as file:
+    pickle.dump(lm, file)
+  print("Language Model saved to lm.pkl")
+
+  # training data to save
+  trainingData = {
+    "modelState": model.state_dict(),
+    "blockSize": blockSize,
+    "nEmbed": nEmbed,
+    "attentionHeadSize": attentionHeadSize,
+    "attentionNumHeads": attentionNumHeads,
+    "numLayers": numLayers,
+    "dropout": dropout,
+  }
+
+  # save to a py torch file
+  FILE = "model.pth"
+  torch.save(trainingData, FILE)
+
+  print(f'Training complete. File saved to {FILE}')
