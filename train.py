@@ -3,22 +3,24 @@ from languageModel import LanguageModel
 from transformer import Transformer
 import pickle
 
+# Pad data for dimension consistency (-1 doesn't mean anything)
+def padData(lst, maxLength):
+  if len(lst) < maxLength:
+    return lst + [-1] * (maxLength - len(lst))
+
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
   promptIndices = []
   indices = []
-  blockSizes = []
   # set list of random int between 0 to len(answer) - blocksize for batchSize random (prompt, answer) tuples (indices of answers to indicate start of a block)
   for _ in range(0, batchSize):
-    promptIdx = torch.randint(len(data)) # index for the random (prompt, answer) tuple
+    promptIdx = torch.randint(len(data), ()) # index for the random (prompt, answer) tuple
     promptIndices.append(promptIdx)
-    answerBlockSize = min(blockSize, len(data[promptIdx][1])) # make sure blocksize don't go over length of the answer tensor (answers can be less length than blockSize)
-    indices.append(torch.randint(len(data[promptIdx][1]) - answerBlockSize)) # random starting index for the answer tensor
-    blockSizes.append(answerBlockSize)
+    indices.append(torch.randint(len(data[promptIdx][1]) - blockSize, ())) # random starting index for the answer tensor
   prompts = torch.stack([data[promptIdx][0] for promptIdx in promptIndices])
   # these are all batchSize list of blockSize lists
-  x = torch.stack([data[promptIndices[idx]][1][indices[idx]:indices[idx]+blockSizes[idx]] for idx in range(promptIndices)]) # list of list of context in the chunk (current element and all preceding element is the context)
-  y = torch.stack([data[promptIndices[idx]][1][indices[idx]+1:indices[idx]+blockSizes[idx]+1] for idx in range(promptIndices)]) # list of list of target in the chunk (current element is the target)
+  x = torch.stack([data[promptIndices[idx]][1][indices[idx]:indices[idx]+blockSize] for idx in range(len(promptIndices))]) # list of list of context in the chunk (current element and all preceding element is the context)
+  y = torch.stack([data[promptIndices[idx]][1][indices[idx]+1:indices[idx]+blockSize+1] for idx in range(len(promptIndices))]) # list of list of target in the chunk (current element is the target)
   prompts, x, y = prompts.to(device), x.to(device), y.to(device)
   return prompts, x, y
 
@@ -77,9 +79,9 @@ if __name__ == '__main__':
   currentPrompt = [] # prompt of the current line
   for line in text.splitlines():  # go line by line (prompt and answer is separated by \n)
     if len(currentPrompt) == 0: # if prompt is not set then we set it
-      currentPrompt = torch.tensor(lm.encode(line), dtype=torch.long)
+      currentPrompt = torch.tensor(padData(lm.encode(line), MAXCONTEXTLENGTH), dtype=torch.long)
     else: # if prompt is set then we add the (prompt, answer) tuple to data
-      data.append((currentPrompt, torch.tensor(lm.encode(line), dtype=torch.long)))
+      data.append((currentPrompt, torch.tensor(padData(lm.encode(line), blockSize + 1), dtype=torch.long))) # pad for answers less than blockSize
       currentPrompt = []
 
   # split data into train data and validation sets (prevent and get a sense of overfitting)
