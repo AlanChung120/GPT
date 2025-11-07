@@ -3,10 +3,10 @@ from languageModel import LanguageModel
 from transformer import Transformer
 import pickle
 
-# Pad data for dimension consistency (-1 doesn't mean anything)
+# Pad data for dimension consistency (0 means next line which is end of sequence)
 def padData(lst, maxLength):
   if len(lst) < maxLength:
-    return lst + [-1] * (maxLength - len(lst))
+    return lst + [0] * (maxLength - len(lst))
 
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
@@ -18,9 +18,9 @@ def getBatch(type):
     promptIndices.append(promptIdx)
     indices.append(torch.randint(len(data[promptIdx][1]) - blockSize, ())) # random starting index for the answer tensor
   prompts = torch.stack([data[promptIdx][0] for promptIdx in promptIndices])
-  # these are all batchSize list of blockSize lists
-  x = torch.stack([data[promptIndices[idx]][1][indices[idx]:indices[idx]+blockSize] for idx in range(len(promptIndices))]) # list of list of context in the chunk (current element and all preceding element is the context)
-  y = torch.stack([data[promptIndices[idx]][1][indices[idx]+1:indices[idx]+blockSize+1] for idx in range(len(promptIndices))]) # list of list of target in the chunk (current element is the target)
+  # these are all batchSize list of blockSize lists (batchSize amount of blockSize different contexts and targets for each of these contexts)
+  x = torch.stack([data[promptIndices[idx]][1][indices[idx]:indices[idx]+blockSize] for idx in range(batchSize)]) # list of list of context in the chunk (current element and all preceding element is the context)
+  y = torch.stack([data[promptIndices[idx]][1][indices[idx]+1:indices[idx]+blockSize+1] for idx in range(batchSize)]) # list of list of target in the chunk (current element is the target)
   prompts, x, y = prompts.to(device), x.to(device), y.to(device)
   return prompts, x, y
 
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     if len(currentPrompt) == 0: # if prompt is not set then we set it
       currentPrompt = torch.tensor(padData(lm.encode(line), MAXCONTEXTLENGTH), dtype=torch.long)
     else: # if prompt is set then we add the (prompt, answer) tuple to data
-      data.append((currentPrompt, torch.tensor(padData(lm.encode(line), blockSize + 1), dtype=torch.long))) # pad for answers less than blockSize
+      data.append((currentPrompt, torch.tensor(padData(lm.encode(line), blockSize + 1), dtype=torch.long))) # pad for answers less than blockSize + 1 (+ 1 because last context needs a target)
       currentPrompt = []
 
   # split data into train data and validation sets (prevent and get a sense of overfitting)
