@@ -65,6 +65,9 @@ class AttentionHead(nn.Module):
     # filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
     if self.tril is not None:
       weightMatrix = weightMatrix.masked_fill(self.tril[:T, :T] == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
+    #EXTRA MASKING HERE FOR THE PADDED VALUES
+    paddedMask = (x == 0) # True (is padded value) False (is not padded value) matrix of padded values
+    weightMatrix = weightMatrix.masked_fill(paddedMask.unsqueeze(1).unsqueeze(2), float('-inf'))
     # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
     weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence) (B, T, T/S)
     # perform dropout (randomly prevent some nodes from communicating)
