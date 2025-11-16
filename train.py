@@ -3,10 +3,12 @@ from languageModel import LanguageModel
 from transformer import Transformer
 import pickle
 
-# Pad data for dimension consistency (0 means next line which is end of sequence)
+# Pad data for dimension consistency in getBatch (0 means next line which is end of sequence)
 def padData(lst, maxLength):
   if len(lst) < maxLength:
     return lst + [0] * (maxLength - len(lst))
+  else:
+    return lst
 
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
@@ -48,7 +50,7 @@ if __name__ == '__main__':
 
   # hyperparameters----------------------------------------------------------------------------------
   # maximum input of encoder length/prompt length
-  MAXCONTEXTLENGTH = 4096
+  MAXPROMPTLENGTH = 4096
   # train in chunks for efficiency
   batchSize = 64 # independent chunks to process in parallel (GPU efficient)
   # context-target based chunk training: the chunk contains information for every element in the chunk,
@@ -79,9 +81,10 @@ if __name__ == '__main__':
   currentPrompt = [] # prompt of the current line
   for line in text.splitlines():  # go line by line (prompt and answer is separated by \n)
     if len(currentPrompt) == 0: # if prompt is not set then we set it
-      currentPrompt = torch.tensor(padData(lm.encode(line), MAXCONTEXTLENGTH), dtype=torch.long)
+      currentPrompt = torch.tensor(padData(lm.encode(line), MAXPROMPTLENGTH), dtype=torch.long) # pad all prompts to MAXPROMPTLENGTH
     else: # if prompt is set then we add the (prompt, answer) tuple to data
-      data.append((currentPrompt, torch.tensor(padData(lm.encode(line), blockSize + 1), dtype=torch.long))) # pad for answers less than blockSize + 1 (+ 1 because last context needs a target)
+      answer = torch.tensor(padData(lm.encode(line), blockSize + 1), dtype=torch.long) # pad for answers less than blockSize + 1 (+ 1 because last context needs a target)
+      data.append((currentPrompt, answer))
       currentPrompt = []
 
   # split data into train data and validation sets (prevent and get a sense of overfitting)
@@ -89,7 +92,7 @@ if __name__ == '__main__':
   trainData = data[:split]
   valData = data[split:]
   
-  model = Transformer(nEmbed, lm.vocabSize, MAXCONTEXTLENGTH, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
+  model = Transformer(nEmbed, lm.vocabSize, MAXPROMPTLENGTH, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
   # optimizer: method of updating the parameters using the gradients, ADAM (adaptive learning rate)
   optimizer = torch.optim.AdamW(model.parameters(), lr=learningRate)
 
@@ -112,14 +115,15 @@ if __name__ == '__main__':
     optimizer.step() # step (optimize parameters) towards negative of gradient (calculated in the previous step) scaled with learning rate
 
   # save language model
-  with open("lm.pkl", "wb") as file:
+  LMFILE = "lm.pkl"
+  with open(LMFILE, "wb") as file:
     pickle.dump(lm, file)
-  print("Language Model saved to lm.pkl")
+  print(f'Language Model saved to {LMFILE}')
   
   # training data to save
   trainingData = {
     "modelState": model.state_dict(),
-    "maxContextLength": MAXCONTEXTLENGTH,
+    "maxPromptLength": MAXPROMPTLENGTH,
     "blockSize": blockSize,
     "nEmbed": nEmbed,
     "attentionHeadSize": attentionHeadSize,
@@ -129,7 +133,7 @@ if __name__ == '__main__':
   }
 
   # save to a py torch file
-  FILE = "model.pth"
-  torch.save(trainingData, FILE)
+  MODELFILE = "model.pth"
+  torch.save(trainingData, MODELFILE)
 
-  print(f'Training complete. File saved to {FILE}')
+  print(f'Training complete. File saved to {MODELFILE}')

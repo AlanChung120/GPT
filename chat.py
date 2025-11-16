@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
   # load parameters
   modelState = trainingData["modelState"]
-  MAXCONTEXTLENGTH = trainingData["maxContextLength"]
+  MAXPROMPTLENGTH = trainingData["maxPromptLength"]
   blockSize = trainingData["blockSize"]
   nEmbed = trainingData["nEmbed"]
   attentionHeadSize = trainingData["attentionHeadSize"]
@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
   # set device and model
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-  model = Transformer(nEmbed, lm.vocabSize, MAXCONTEXTLENGTH, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
+  model = Transformer(nEmbed, lm.vocabSize, MAXPROMPTLENGTH, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
 
   # load the learned parameters from the file
   model.load_state_dict(modelState)
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     prompt = input("You: ")
     if prompt == "quit" or prompt == "q":
       break
-    elif len(prompt) > MAXCONTEXTLENGTH:
+    elif len(prompt) > MAXPROMPTLENGTH:
       print("Prompt is too long. Try again")
       continue
 
