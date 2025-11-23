@@ -33,8 +33,9 @@ class AttentionHead(nn.Module):
     self.dropout = nn.Dropout(dropout)
   
   # Forward pass of a singular head of attention (B, T, C) -> (B, T, headSize) 
+  # paddedMask: True/False (is padded value) matrix for filtering out padded value for attention (B, T)
   # if external provided then it is cross-attention from external otherwise it is self-attention
-  def forward(self, x, external=None):
+  def forward(self, x, paddedMask, external=None):
     # B = batch size (compute in parallel)
     # T = time, block size (most cases unless it's smaller), sequential characters in a context chunk (=S if encoder block attention)
     # C = channel, nEmbed (also headSize in most cases)
@@ -65,9 +66,8 @@ class AttentionHead(nn.Module):
     # filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
     if self.tril is not None:
       weightMatrix = weightMatrix.masked_fill(self.tril[:T, :T] == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
-    # EXTRA MASKING HERE FOR THE PADDED VALUES (probably only here like self attention decoder mask case)
-    paddedMask = (x == 0) # True (is padded value) False (is not padded value) matrix of padded values
-    weightMatrix = weightMatrix.masked_fill(paddedMask.unsqueeze(1).unsqueeze(2), float('-inf'))
+    # Extra masking for the padded values (probably only here like self attention decoder mask case)
+    weightMatrix = weightMatrix.masked_fill(paddedMask.unsqueeze(1), float('-inf')) # (B, T, T/S)
     # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
     weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence) (B, T, T/S)
     # perform dropout (randomly prevent some nodes from communicating)
@@ -97,9 +97,9 @@ class MultiHeadAttention(nn.Module):
     self.dropout = nn.Dropout(dropout)
   
   # run multiple single head of attention in paraellel (B, T/S, C) -> (B, T/S, headSize)
-  def forward(self, x, external=None):
+  def forward(self, x, paddedMask, external=None):
     # run multiple single head of attention and concatenate the outputs over the channel dimension (C)
-    out = torch.cat([head(x, external) for head in self.heads], dim=-1)
+    out = torch.cat([head(x, paddedMask, external) for head in self.heads], dim=-1)
     # perform Linear Projection of the outcome back into the residual pathway and dropout
     out = self.dropout(self.proj(out))
     return out

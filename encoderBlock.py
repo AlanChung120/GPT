@@ -23,7 +23,7 @@ class EncoderBlock(nn.Module):
     self.layerNorm2 = nn.LayerNorm(headSize) # results are same dimensions: (B, S, headSize)
   
   # one forward pass of the block (B, S, C/nEmbed/headSize) -> (B, S, headSize)
-  def forward(self, x):
+  def forward(self, x, paddedMask):
     # apply multiple heads of self-attention 
     # perform residual connections (shortcuts) which allow bypassing multiple layers to optimize deep neural networks
     # Mitigates vanishing gradient problem (early layers have trouble learning due to diminishing gradients as they propogate backwards many layers)
@@ -31,7 +31,7 @@ class EncoderBlock(nn.Module):
     # fork off do calculations (not taking the shortcut), comeback and add (project) to original input (residual pathway/connection)
     # network learns the residuals (difference between input and output) rather than the output itself
     # apply layer norm before transformation (changed from the original transformer model)
-    x = x + self.saHeads(self.layerNorm1(x)) # (B, S, C/nEmbed/headSize) (residual pathway) + (B, S, headSize) (fork off) = (B, S, headSize)
+    x = x + self.saHeads(self.layerNorm1(x), paddedMask) # (B, S, C/nEmbed/headSize) (residual pathway) + (B, S, headSize) (fork off) = (B, S, headSize)
     # apply a feed forward network
     x = x + self.feedForward(self.layerNorm2(x))  # (B, S, C/nEmbed/headSize) (residual pathway) + (B, S, headSize) (fork off) = (B, S, headSize)
     return x # (B, S, headSize)

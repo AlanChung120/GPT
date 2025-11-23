@@ -29,6 +29,7 @@ class Encoder(nn.Module):
     # C = channel, nEmbed (=headSize in this case)
     # vocabSize = all possible next tokens
     B, S = prompts.shape
+    paddedMask = (prompts == 0) # True/False (is padded value) matrix for filtering out padded value for attention (B, T)
 
     # prompts is (B, S)
     # returns a (B, S, C) tensor given the prompts by getting positional and identity embeddings returned by the embedding tables by going 
@@ -40,6 +41,6 @@ class Encoder(nn.Module):
     # encode both positional and identity embedding 
     x = tokenEmbedding + positionEmbedding # (B, S, C) + (B (B copies of positionEmbedding automatically added), S, C) = (B, S, C)
     # run the transformer blocks
-    x = self.blocks(x) # (B, S, C) -> (B, S, headSize)
+    x = self.blocks(x, paddedMask) # (B, S, C) -> (B, S, headSize)
     
     return x

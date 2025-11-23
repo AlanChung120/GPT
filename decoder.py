@@ -38,6 +38,7 @@ class Decoder(nn.Module):
     # C = channel, nEmbed (=headSize in this case)
     # vocabSize = all possible next tokens
     B, T = contexts.shape
+    paddedMask = (contexts == 0) # True/False (is padded value) matrix for filtering out padded value for attention (B, T)
 
     # contexts and targets are (B, T) -> for given context token contexts[i][j] the target token is targets[i][j]
     # returns a (B, T, C) tensor given the contexts by getting positional and identity embeddings returned by the embedding tables by going 
@@ -49,7 +50,7 @@ class Decoder(nn.Module):
     # encode both positional and identity embedding 
     x = tokenEmbedding + positionEmbedding # (B, T, C) + (B (B copies of positionEmbedding automatically added), T, C) = (B, T, C)
     # run the transformer blocks
-    x = self.blocks(x, external) # (B, T, C) -> (B, T, headSize)
+    x = self.blocks(x, paddedMask, external) # (B, T, C) -> (B, T, headSize)
     # run the layer norm
     x = self.layerNorm(x) # (B, T, headSize) -> (B, T, headSize)
     # convert headSize (which is C and nEmbed in most cases) dimension to vocabSize dimension to get the logits for all possible next tokens
