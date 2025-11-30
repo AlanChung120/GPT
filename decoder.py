@@ -34,7 +34,7 @@ class Decoder(nn.Module):
   # external is the external sources for cross attention inside blocks, if not provided then it will just do a self-attention
   def forward(self, device, contexts, targets=None, external=None):
     # B = batch size (compute in parallel)
-    # T = time, block size (most cases unless it's smaller), sequential characters in a context chunk
+    # T = time, block size, sequential characters in a context chunk
     # C = channel, nEmbed (=headSize in this case)
     # vocabSize = all possible next tokens
     B, T = contexts.shape

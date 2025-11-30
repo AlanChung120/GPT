@@ -25,11 +25,11 @@ class Encoder(nn.Module):
   # forward pass/evaluation of the model -> prompts is the input
   def forward(self, device, prompts):
     # B = batch size (compute in parallel)
-    # S = prompt size, sequential characters in the prompt (!= maxEncoderSize becasue S can be less)
+    # S = prompt size, sequential characters in the prompt (= maxEncoderSize)
     # C = channel, nEmbed (=headSize in this case)
     # vocabSize = all possible next tokens
     B, S = prompts.shape
-    paddedMask = (prompts == 0) # True/False (is padded value) matrix for filtering out padded value for attention (B, T)
+    paddedMask = (prompts == 0) # True/False (is padded value) matrix for filtering out padded value for attention (B, S)
 
     # prompts is (B, S)
     # returns a (B, S, C) tensor given the prompts by getting positional and identity embeddings returned by the embedding tables by going 

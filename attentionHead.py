@@ -33,11 +33,11 @@ class AttentionHead(nn.Module):
     self.dropout = nn.Dropout(dropout)
   
   # Forward pass of a singular head of attention (B, T, C) -> (B, T, headSize) 
-  # paddedMask: True/False (is padded value) matrix for filtering out padded value for attention (B, T)
+  # paddedMask: True/False (is padded value) matrix for filtering out padded value for attention (B, T/S)
   # if external provided then it is cross-attention from external otherwise it is self-attention
   def forward(self, x, paddedMask, external=None):
     # B = batch size (compute in parallel)
-    # T = time, block size (most cases unless it's smaller), sequential characters in a context chunk (=S if encoder block attention)
+    # T = time, block size, sequential characters in a context chunk (=S if encoder block attention)
     # C = channel, nEmbed (also headSize in most cases)
     B, T, C = x.shape
 
@@ -62,12 +62,12 @@ class AttentionHead(nn.Module):
     # which then the softmax will stay diffuse and not saturate too much to the extreme (converge to one hot vector)
     weightMatrix = q @ k.transpose(-2, -1) * headSize**-0.5 # transpose last two dimensions: (B, T, headSize) @ (B, headSize, T/S) -> (B, T, T/S) B T by T/S matrices
     # If tril is set (decoder block self-attention) filter/mask appropriately using tril matrix set above (encoder/decoder step)
-    # tril is shrunk to T dimension (for T < blockSize case but T = blockSize most cases) but still keeps the lower triangle 1s matrix form
+    # tril is shrunk to T dimension (for T < blockSize case but T = blockSize) but still keeps the lower triangle 1s matrix form
     # filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
     if self.tril is not None:
       weightMatrix = weightMatrix.masked_fill(self.tril[:T, :T] == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
     # Extra masking for the padded values (probably only here like self attention decoder mask case)
-    weightMatrix = weightMatrix.masked_fill(paddedMask.unsqueeze(1), float('-inf')) # (B, T, T/S)
+    weightMatrix = weightMatrix.masked_fill(paddedMask.unsqueeze(1), float('-inf')) # (B, T, T/S) (unsqueeze -> (B, T/S) to (B, 1, T/S))
     # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
     weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence) (B, T, T/S)
     # perform dropout (randomly prevent some nodes from communicating)
