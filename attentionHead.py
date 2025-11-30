@@ -45,7 +45,7 @@ class AttentionHead(nn.Module):
     if external:
       # B = batch size (compute in parallel)
       # S = encoder input size, prompt size
-      # C = channel, nEmbed (also headSize in most cases)
+      # C = headSize
       B, S, C = external.shape
 
     # Produce key, query, and value vector in paraellel (no communication between tokens)
@@ -66,9 +66,9 @@ class AttentionHead(nn.Module):
     # filter/mask upper triangle of tril (lower triangular 1s matrix) which are all 0 with -inf (-inf represents that tokens from the future is not considered)
     if self.tril is not None:
       weightMatrix = weightMatrix.masked_fill(self.tril[:T, :T] == 0, float('-inf')) # lower triangular affinities and upper triangular -inf
-    # Extra masking for the padded values (probably only here like self attention decoder mask case)
+    # Extra masking for the padded values (for every query (2nd dimension), key (last dimension, what paddedMask is based off) is appropriately masked out)
     weightMatrix = weightMatrix.masked_fill(paddedMask.unsqueeze(1), float('-inf')) # (B, T, T/S) (unsqueeze -> (B, T/S) to (B, 1, T/S))
-    # softmax (normalization operation) each row (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
+    # key (last dimension) softmax (row normalization operation) (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
     weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence) (B, T, T/S)
     # perform dropout (randomly prevent some nodes from communicating)
     weightMatrix = self.dropout(weightMatrix)

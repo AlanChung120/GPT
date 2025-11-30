@@ -32,13 +32,13 @@ class Decoder(nn.Module):
   # forward function is implicitly called when the instance (object) is called directly (B, T) -> (B, T, vocabSize)
   # forward pass/evaluation of the model -> contexts is the input, targets is the target output
   # external is the external sources for cross attention inside blocks, if not provided then it will just do a self-attention
-  def forward(self, device, contexts, targets=None, external=None):
+  # encPaddedMask needed for cross attention
+  def forward(self, device, contexts, encPaddedMask, decPaddedMask, targets=None, external=None):
     # B = batch size (compute in parallel)
     # T = time, block size, sequential characters in a context chunk
     # C = channel, nEmbed (=headSize in this case)
     # vocabSize = all possible next tokens
     B, T = contexts.shape
-    paddedMask = (contexts == 0) # True/False (is padded value) matrix for filtering out padded value for attention (B, T)
 
     # contexts and targets are (B, T) -> for given context token contexts[i][j] the target token is targets[i][j]
     # returns a (B, T, C) tensor given the contexts by getting positional and identity embeddings returned by the embedding tables by going 
@@ -50,7 +50,7 @@ class Decoder(nn.Module):
     # encode both positional and identity embedding 
     x = tokenEmbedding + positionEmbedding # (B, T, C) + (B (B copies of positionEmbedding automatically added), T, C) = (B, T, C)
     # run the transformer blocks
-    x = self.blocks(x, paddedMask, external) # (B, T, C) -> (B, T, headSize)
+    x = self.blocks(x, decPaddedMask, encPaddedMask, external) # (B, T, C) -> (B, T, headSize)
     # run the layer norm
     x = self.layerNorm(x) # (B, T, headSize) -> (B, T, headSize)
     # convert headSize (which is C and nEmbed in most cases) dimension to vocabSize dimension to get the logits for all possible next tokens

@@ -23,13 +23,13 @@ class DecoderBlock(nn.Module):
     # contrast to batch normalization which normalizes column (singular feature/neuron across batch dimension) to N(0, 1) and scale (gamma) and shift (beta)
     # gamma and beta are learnable parameters, this improves training stability and speed
     # batch/blockSize/time act as batch dimensions (per token transformation, normalizes the features into unit N(0, 1))
-    self.layerNorm1 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, headSize)
-    self.layerNorm2 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, headSize)
-    self.layerNorm3 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, headSize)
+    self.layerNorm1 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, C/nEmbed/headSize)
+    self.layerNorm2 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, C/nEmbed/headSize)
+    self.layerNorm3 = nn.LayerNorm(headSize) # results are same dimensions: (B, T, C/nEmbed/headSize)
   
   # one forward pass of the block (B, T, C/nEmbed/headSize) -> (B, T, headSize)
   # external is the external source for the cross-attention
-  def forward(self, x, paddedMask, external=None):
+  def forward(self, x, decPaddedMask, encPaddedMask, external=None):
     # apply multiple heads of self-attention 
     # perform residual connections (shortcuts) which allow bypassing multiple layers to optimize deep neural networks
     # Mitigates vanishing gradient problem (early layers have trouble learning due to diminishing gradients as they propogate backwards many layers)
@@ -37,9 +37,9 @@ class DecoderBlock(nn.Module):
     # fork off do calculations (not taking the shortcut), comeback and add (project) to original input (residual pathway/connection)
     # network learns the residuals (difference between input and output) rather than the output itself
     # apply layer norm before transformation (changed from the original transformer model)
-    x = x + self.saHeads(self.layerNorm1(x), paddedMask) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
+    x = x + self.saHeads(self.layerNorm1(x), decPaddedMask) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     # apply multiple heads of cross attention
-    x = x + self.caHeads(self.layerNorm2(x), paddedMask, external) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
+    x = x + self.caHeads(self.layerNorm2(x), encPaddedMask, external) # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     # apply a feed forward network
     x = x + self.feedForward(self.layerNorm3(x))  # (B, T, C/nEmbed/headSize) (residual pathway) + (B, T, headSize) (fork off) = (B, T, headSize)
     return x # (B, T, headSize)

@@ -19,8 +19,8 @@ class EncoderBlock(nn.Module):
     # contrast to batch normalization which normalizes column (singular feature/neuron across batch dimension) to N(0, 1) and scale (gamma) and shift (beta)
     # gamma and beta are learnable parameters, this improves training stability and speed
     # batch/blockSize/time act as batch dimensions (per token transformation, normalizes the features into unit N(0, 1))
-    self.layerNorm1 = nn.LayerNorm(headSize) # results are same dimensions: (B, S, headSize)
-    self.layerNorm2 = nn.LayerNorm(headSize) # results are same dimensions: (B, S, headSize)
+    self.layerNorm1 = nn.LayerNorm(headSize) # results are same dimensions: (B, S, C/nEmbed/headSize)
+    self.layerNorm2 = nn.LayerNorm(headSize) # results are same dimensions: (B, S, C/nEmbed/headSize)
   
   # one forward pass of the block (B, S, C/nEmbed/headSize) -> (B, S, headSize)
   def forward(self, x, paddedMask):

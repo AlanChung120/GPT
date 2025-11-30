@@ -20,10 +20,12 @@ class Transformer(nn.Module):
   # forward function is implicitly called when the instance (object) is called directly (B, S) and (B, T) -> (B, T, vocabSize)
   # forward pass/evaluation of the model -> prompts (B, S) is the encoder input, contexts (B, T) and targets (B, T) is the decoder input
   def forward(self, device, prompts, contexts, targets=None):
+    encPaddedMask = (prompts == 0) # True/False (is padded value) matrix for filtering out padded value for attention (B, S)
+    decPaddedMask = (contexts == 0) # True/False (is padded value) matrix for filtering out padded value for attention (B, T)
     # run the encoder to get the encoded prompt to input to the decoder (see encoder.py)
-    encodedPrompts = self.encoder(device, prompts) # (B, S) -> (B, S, headSize)
+    encodedPrompts = self.encoder(device, prompts, encPaddedMask) # (B, S) -> (B, S, headSize)
     # run the decoder (see decoder.py)
-    logits, loss = self.decoder(device, contexts, targets, encodedPrompts) # (B, T) and (B, S, headSize) -> (B, T, vocabSize)
+    logits, loss = self.decoder(device, contexts, encPaddedMask, decPaddedMask, targets, encodedPrompts) # (B, T) and (B, S, headSize) -> (B, T, vocabSize)
 
     return logits, loss
   
