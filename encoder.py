@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from torch.nn import functional as F
 from encoderBlock import EncoderBlock
+from MultiSequential import MultiSequential
 torch.manual_seed(1337) # set seed for consistency
 
 class Encoder(nn.Module):
@@ -19,7 +19,7 @@ class Encoder(nn.Module):
     # Object representing a look up table of maxEncoderSize by nEmbed that stores the nEmbed vectors for all possible token positions (1, 2, ..., maxEncoderSize)
     self.positionEmbeddingTable = nn.Embedding(maxEncoderSize, nEmbed) # (maxEncoderSize, C) encode token position
     # multiple iteration of self-attention (communication) and feed forward (computation) blocks to intersperse them
-    self.blocks = nn.Sequential(*[EncoderBlock(headSize, numHeads, nEmbed, dropout) for _ in range(numLayers)]) # numLayers * (B, S, nEmbed/headSize) 
+    self.blocks = MultiSequential(*[EncoderBlock(headSize, numHeads, nEmbed, dropout) for _ in range(numLayers)]) # numLayers * (B, S, nEmbed/headSize) 
 
   # forward function is implicitly called when the instance (object) is called directly (B, S) -> (B, S, vocabSize)
   # forward pass/evaluation of the model -> prompts is the input

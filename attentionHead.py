@@ -6,16 +6,16 @@ torch.manual_seed(1337) # set seed for consistency
 class AttentionHead(nn.Module):
   """
   A class used to represent a one head of attention (self when keys and values all come from the same source as queries (x) otherwise it is cross-attention)
-    Attention is communication mechanism of a directed graph that aggregates via the weighted sum from all nodes that point to them (all the preceding tokens in our case)
-    no notion of space, just set of vectors and we postionally encode them (positionEmbeddingTable)
-    - self-attention (keys and values are produced from the same source as queries) 
-    - cross-attention (queries are produced from x but keys and values come from an external source (encoder module))
-    - encoder block: no masking (all tokens communciate with each other (even future), need for sentiment of sentence, communication at all levels)
-    - decoder block: triangular masking (triangular masking to prevent communication from the future, used in language modelling/autoregressive to "decode")
-    instead of equal weighted aggregation we implement a batch/data/token dependent affinity (how related, how much to aggregate/learn) matrix aggregation
-    each token has a query vector (what I am looking for based on token identity and position) and a key vector (what I contain (token identity and position))
-    affinity of token x with token y (y precedes x) = dot product between query vector of x with key vector of y
-    if key and query vector match (key is what query is looking for) higher the dot product (same high components), higher the affinity, higher the weight (relative))
+  Attention is communication mechanism of a directed graph that aggregates via the weighted sum from all nodes that point to them (all the preceding tokens in our case)
+  no notion of space, just set of vectors and we postionally encode them (positionEmbeddingTable)
+  - self-attention (keys and values are produced from the same source as queries) 
+  - cross-attention (queries are produced from x but keys and values come from an external source (encoder module))
+  - encoder block: no masking (all tokens communciate with each other (even future), need for sentiment of sentence, communication at all levels)
+  - decoder block: triangular masking (triangular masking to prevent communication from the future, used in language modelling/autoregressive to "decode")
+  instead of equal weighted aggregation we implement a batch/data/token dependent affinity (how related, how much to aggregate/learn) matrix aggregation
+  each token has a query vector (what I am looking for based on token identity and position) and a key vector (what I contain (token identity and position))
+  affinity of token x with token y (y precedes x) = dot product between query vector of x with key vector of y
+  if key and query vector match (key is what query is looking for) higher the dot product (same high components), higher the affinity, higher the weight (relative))
   """
 
   def __init__(self, headSize, nEmbed, dropout, blockSize=None):

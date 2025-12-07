@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from decoderBlock import DecoderBlock
+from MultiSequential import MultiSequential
 torch.manual_seed(1337) # set seed for consistency
 
 class Decoder(nn.Module):
@@ -20,7 +21,7 @@ class Decoder(nn.Module):
     # Object representing a look up table of blockSize by nEmbed that stores the nEmbed vectors for all possible token positions (1, 2, ..., blockSize)
     self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (blockSize, C) encode token position
     # multiple iteration of self-attention/cross-attention (communication) and feed forward (computation) blocks to intersperse them
-    self.blocks = nn.Sequential(*[DecoderBlock(headSize, numHeads, nEmbed, dropout, blockSize) for _ in range(numLayers)]) # numLayers * (B, T, nEmbed/headSize) 
+    self.blocks = MultiSequential(*[DecoderBlock(headSize, numHeads, nEmbed, dropout, blockSize) for _ in range(numLayers)]) # numLayers * (B, T, nEmbed/headSize) 
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
     # contrast to batch normalization which normalizes column (singular feature/neuron across batch dimension) to N(0, 1) and scale (gamma) and shift (beta)
     # gamma and beta are learnable parameters, this improves training stability and speed
