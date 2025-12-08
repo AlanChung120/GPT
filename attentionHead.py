@@ -42,7 +42,7 @@ class AttentionHead(nn.Module):
     B, T, C = x.shape
 
     # if encoder output provided
-    if external:
+    if external is not None:
       # B = batch size (compute in parallel)
       # S = encoder input size, prompt size
       # C = headSize
@@ -50,9 +50,9 @@ class AttentionHead(nn.Module):
 
     # Produce key, query, and value vector in paraellel (no communication between tokens)
     # gets keys and values from external source if provided (cross) if not get it from itself (self)
-    k = self.key(external) if external else self.key(x)  # key vector for all tokens (B, T/S, C) -> (B, T/S, headSize) (headSize vector to store identity and position)
+    k = self.key(external) if external is not None else self.key(x)  # key vector for all tokens (B, T/S, C) -> (B, T/S, headSize) (headSize vector to store identity and position)
     q = self.query(x) # query vector for all tokens (B, T, C) -> (B, T, headSize) (headSize vector to store what identity and position to look for)
-    v = self.value(external) if external else self.value(x) # value vector for all tokens (B, T/S, C) -> (B, T/S, headSize) (headSize vector for all tokens that store what private x stores (position and identity))
+    v = self.value(external) if external is not None else self.value(x) # value vector for all tokens (B, T/S, C) -> (B, T/S, headSize) (headSize vector for all tokens that store what private x stores (position and identity))
 
     B, T, headSize = k.shape
 
