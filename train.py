@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
   # hyperparameters----------------------------------------------------------------------------------
   # maximum input of encoder length/prompt length
-  MAXPROMPTLENGTH = 4096
+  MAXPROMPTLENGTH = 256
   # train in chunks for efficiency
   batchSize = 64 # independent chunks to process in parallel (GPU efficient)
   # context-target based chunk training: the chunk contains information for every element in the chunk,
@@ -65,7 +65,7 @@ if __name__ == '__main__':
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
   nEmbed = 384 # embedding dimensions (intermediate step)
   # should be equal to nEmbed to execute multiple iteration of blocks (output of self-attention back into input)
-  attentionHeadSize = nEmbed # head size for one head of self-attention
+  attentionHeadSize = nEmbed # head size for one head of self-attention (attentionHeadSize % attentionNumHeads == 0)
   attentionNumHeads = 6 # number of self-attention heads to run in parallel
   numLayers = 6 # number of block layers
   dropout = 0.2 # dropout rate
