@@ -50,5 +50,5 @@ if __name__ == '__main__':
     # generate from the model (\n is the beginning of the sequence and end of the sequence token for decoder (generator))
     context = torch.zeros((1, 1), dtype=torch.long, device=device) # feed the new line character "\n" (0) as the starting sequence/context
     eosToken = 0 # set the new line character "\n" (0) as the ending token
-    response = lm.decode(model.generateUntil(encodedPrompt, context, eosToken, blockSize, device)[0].tolist()[1:]) # generate from the initial context get the first batch and decode it
+    response = lm.decode(model.generateUntil(encodedPrompt, context, eosToken, blockSize, device)[0].tolist()[1:-1]) # generate from the initial context get the first batch and decode it
     print(f'{botName}: {response}')
