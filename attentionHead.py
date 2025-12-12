@@ -70,6 +70,7 @@ class AttentionHead(nn.Module):
     weightMatrix = weightMatrix.masked_fill(paddedMask.unsqueeze(1), float('-inf')) # (B, T, T/S) (unsqueeze -> (B, T/S) to (B, 1, T/S))
     # key (last dimension) softmax (row normalization operation) (exponentiate (-inf -> 0, 0 -> 1, inf -> inf) all the entries/affinities and divide by the sum of its row of exponentiated entries)
     weightMatrix = F.softmax(weightMatrix, dim=-1) # each row sum to 1 (For batch b: i-th row of matrix is the weights for the i-th token in the sequence) (B, T, T/S)
+    weightMatrix = torch.nan_to_num(weightMatrix, nan=0.0) # convert NaN to 0
     # perform dropout (randomly prevent some nodes from communicating)
     weightMatrix = self.dropout(weightMatrix)
     out = weightMatrix @ v  # (B, T, T/S) @ (B, T/S, headSize) -> (B, T, headSize) (for a single head)
