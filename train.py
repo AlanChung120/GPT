@@ -87,7 +87,7 @@ if __name__ == '__main__':
       data.append((currentPrompt, answer))
       currentPrompt = []
 
-  # split data into train data and validation sets (prevent and get a sense of overfitting)
+  # split data into train data and validation sets (prevent and get a sense of overfitting) (len(data) >  1)
   split = int(0.9 * len(data)) # first part of the data will be train then rest of it will be validation
   trainData = data[:split]
   valData = data[split:]
