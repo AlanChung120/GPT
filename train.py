@@ -49,6 +49,9 @@ if __name__ == '__main__':
   torch.manual_seed(1337) # set seed for consistency
 
   # hyperparameters----------------------------------------------------------------------------------
+  # beginning of sequence token and end of sequence token (for decoder/generator)
+  BOS = '<'
+  EOS = '>'
   # maximum input of encoder length/prompt length
   MAXPROMPTLENGTH = 2
   # train in chunks for efficiency
@@ -71,10 +74,10 @@ if __name__ == '__main__':
   dropout = 0.2 # dropout rate
 
   # read in the file
-  with open('input.txt', 'r', encoding='utf-8') as file:
+  with open('basic.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
-  lm = LanguageModel(text)
+  lm = LanguageModel(text, BOS, EOS)
 
   # encode the text data into list of (prompt, answer) tuple. prompt and answer is stored as a torch tensor (multi-dimensional array in pytorch)
   data = [] # list of (prompt, answer) tuple for training/testing

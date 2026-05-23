@@ -4,6 +4,10 @@ class LanguageModel:
   
   Fields
   -----------
+  bos : str
+    the character representing the beginning of sequence token
+  eos : str
+    the character representing the end of sequence token
   chars : list[str]
     list of all the characters in the language model
   vocabSize : int
@@ -13,13 +17,17 @@ class LanguageModel:
   intToChar: dict[int, str]
     translation dictionary from integer to character in the language model
   """
-
+  bos = ''
+  eos = ''
   chars = []
   vocabSize = 0
   charToInt = {}
   intToChar = {}
 
-  def __init__(self, text):
+  def __init__(self, text, bos, eos):
+    self.bos = bos
+    self.eos = eos
+
     self.chars = sorted(list(set(text))) # get all the sorted unique (set) characters in the text 
     self.vocabSize = len(self.chars) # count of all possible characters/elements in the sequence of text
 
@@ -39,3 +47,11 @@ class LanguageModel:
   # decoder: takes the list of integers and turns it into its corresponding string
   def decode(self, ints):
     return ''.join([self.intToChar[int] for int in ints])
+
+  # Get the index of the beginning of sequence token (integer)
+  def getBosIndex(self):
+    return self.charToInt[self.bos] 
+  
+  # Get the index of the end of sequence token (integer)
+  def getEosIndex(self):
+    return self.charToInt[self.eos]
