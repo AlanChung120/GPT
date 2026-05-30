@@ -53,7 +53,7 @@ if __name__ == '__main__':
   BOS = '<'
   EOS = '>'
   # maximum input of encoder length/prompt length
-  MAXPROMPTLENGTH = 2
+  MAXPROMPTLENGTH = 4
   # train in chunks for efficiency
   batchSize = 4 # independent chunks to process in parallel (GPU efficient)
   # context-target based chunk training: the chunk contains information for every element in the chunk,
@@ -61,7 +61,7 @@ if __name__ == '__main__':
   # element's positional information (context (as low as one characater) -> target)
   # Allow the model to see many different context sizes
   blockSize = 4 # maximum context length (chunk length) (that the model will be used to)
-  epochs = 5000
+  epochs = 20000
   printInterval = 1000
   learningRate = 3e-5 # bigger the neural network the lower
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -74,7 +74,7 @@ if __name__ == '__main__':
   dropout = 0.2 # dropout rate
 
   # read in the file
-  with open('basic.txt', 'r', encoding='utf-8') as file:
+  with open('input.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
   lm = LanguageModel(text, BOS, EOS)
