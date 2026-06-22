@@ -61,7 +61,7 @@ if __name__ == '__main__':
   # element's positional information (context (as low as one characater) -> target)
   # Allow the model to see many different context sizes
   blockSize = 2 # maximum context length (chunk length) (that the model will be used to)
-  epochs = 40000
+  epochs = 60000
   printInterval = 1000
   learningRate = 3e-5 # bigger the neural network the lower
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
