@@ -1,17 +1,30 @@
 import torch
 from languageModel import LanguageModel
-from decoder import Decoder
+from transformer import Transformer
 import pickle
+
+# Pad data for dimension consistency in getBatch (0 means next line which is end of sequence)
+def padData(lst, maxLength):
+  if len(lst) < maxLength:
+    return lst + [0] * (maxLength - len(lst))
+  else:
+    return lst
 
 def getBatch(type):
   data = trainData if type == 'train' else valData # data based on type
-  # list of batchSize random int between 0 to len(data) - blocksize (indices of data to indicate start of a block)
-  indices = torch.randint(len(data) - blockSize, (batchSize, ))
-  # these are all batchSize list of blockSize lists
-  x = torch.stack([data[idx: idx+blockSize] for idx in indices]) # list of list of context in the chunk (current element and all preceding element is the context)
-  y = torch.stack([data[idx+1:idx+blockSize+1] for idx in indices]) # list of list of target in the chunk (current element is the target)
-  x, y = x.to(device), y.to(device)
-  return x, y
+  promptIndices = []
+  indices = []
+  # set list of random int between 0 to len(answer) - blocksize for batchSize random (prompt, answer) tuples (indices of answers to indicate start of a block)
+  for _ in range(0, batchSize):
+    promptIdx = torch.randint(len(data), ()) # index for the random (prompt, answer) tuple
+    promptIndices.append(promptIdx)
+    indices.append(torch.randint(len(data[promptIdx][1]) - blockSize, ())) # random starting index for the answer tensor
+  prompts = torch.stack([data[promptIdx][0] for promptIdx in promptIndices])
+  # these are all batchSize list of blockSize lists (batchSize amount of blockSize different contexts and targets for each of these contexts)
+  x = torch.stack([data[promptIndices[idx]][1][indices[idx]:indices[idx]+blockSize] for idx in range(batchSize)]) # list of list of context in the chunk (current element and all preceding element is the context)
+  y = torch.stack([data[promptIndices[idx]][1][indices[idx]+1:indices[idx]+blockSize+1] for idx in range(batchSize)]) # list of list of target in the chunk (current element is the target)
+  prompts, x, y = prompts.to(device), x.to(device), y.to(device)
+  return prompts, x, y
 
 # estimate loss through average over multiple batches to reduce noise (batch dependent) (more accurate)
 @torch.no_grad() # not call backward step (for pytorch efficiency)
@@ -24,8 +37,8 @@ def estimateLoss():
     losses = torch.zeros(estimateIters) # to store all losses from estimateIters iterations
     # average out the loss over multiple batches (estimateIters batches)
     for k in range(estimateIters):
-      X, Y = getBatch(split)
-      logits, loss = model(device, X, Y)
+      prompts, X, Y = getBatch(split)
+      logits, loss = model(device, prompts, X, Y)
       losses[k] = loss.item() # store the loss
     lossEstimates[split] = losses.mean() # average out estimateIters iterations of losses
   # enables dropout batchnorm layers
@@ -36,41 +49,53 @@ if __name__ == '__main__':
   torch.manual_seed(1337) # set seed for consistency
 
   # hyperparameters----------------------------------------------------------------------------------
+  # beginning of sequence token and end of sequence token (for decoder/generator)
+  BOS = '<'
+  EOS = '>'
+  # maximum input of encoder length/prompt length
+  MAXPROMPTLENGTH = 8
   # train in chunks for efficiency
-  batchSize = 64 # independent chunks to process in parallel (GPU efficient)
+  batchSize = 8 # independent chunks to process in parallel (GPU efficient)
   # context-target based chunk training: the chunk contains information for every element in the chunk,
   # that element can act as a target and everything preceding can act as the context. So it contains each
   # element's positional information (context (as low as one characater) -> target)
   # Allow the model to see many different context sizes
-  blockSize = 256 # maximum context length (chunk length) (that the model will be used to)
+  blockSize = 4 # maximum context length (chunk length) (that the model will be used to)
   epochs = 5000
-  printInterval = 500
+  printInterval = 1000
   learningRate = 3e-4 # bigger the neural network the lower
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
-  maxNewTokens = 10000
-  nEmbed = 384 # embedding dimensions (intermediate step)
+  nEmbed = 48 # embedding dimensions (intermediate step)
   # should be equal to nEmbed to execute multiple iteration of blocks (output of self-attention back into input)
-  attentionHeadSize = nEmbed # head size for one head of self-attention
+  attentionHeadSize = nEmbed # head size for one head of self-attention (attentionHeadSize % attentionNumHeads == 0)
   attentionNumHeads = 6 # number of self-attention heads to run in parallel
   numLayers = 6 # number of block layers
   dropout = 0.2 # dropout rate
 
-  # read in the file (1,000,000 characters) can change
+  # read in the file
   with open('input.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
-  lm = LanguageModel(text)
+  lm = LanguageModel(text, BOS, EOS)
 
-  # encode the entire text data and store it into a torch tensor (multi-dimensional array in pytorch)
-  data = torch.tensor(lm.encode(text), dtype=torch.long)
+  # encode the text data into list of (prompt, answer) tuple. prompt and answer is stored as a torch tensor (multi-dimensional array in pytorch)
+  data = [] # list of (prompt, answer) tuple for training/testing
+  currentPrompt = [] # prompt of the current line
+  for line in text.splitlines():  # go line by line (prompt and answer is separated by \n)
+    if len(currentPrompt) == 0: # if prompt is not set then we set it
+      currentPrompt = torch.tensor(padData(lm.encode(line), MAXPROMPTLENGTH), dtype=torch.long) # pad all prompts to MAXPROMPTLENGTH
+    else: # if prompt is set then we add the (prompt, answer) tuple to data
+      answer = torch.tensor(padData(lm.encode(line), blockSize + 1), dtype=torch.long) # pad for answers less than blockSize + 1 (+ 1 because last context needs a target)
+      data.append((currentPrompt, answer))
+      currentPrompt = []
 
-  # split data into train data and validation sets (prevent and get a sense of overfitting)
+  # split data into train data and validation sets (prevent and get a sense of overfitting) (len(data) >  1)
   split = int(0.9 * len(data)) # first part of the data will be train then rest of it will be validation
   trainData = data[:split]
   valData = data[split:]
   
-  model = Decoder(nEmbed, lm.vocabSize, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
+  model = Transformer(nEmbed, lm.vocabSize, MAXPROMPTLENGTH, blockSize, attentionHeadSize, attentionNumHeads, numLayers, dropout).to(device)
   # optimizer: method of updating the parameters using the gradients, ADAM (adaptive learning rate)
   optimizer = torch.optim.AdamW(model.parameters(), lr=learningRate)
 
@@ -82,30 +107,26 @@ if __name__ == '__main__':
       print(f'epoch {epoch + 1}/{epochs}, train loss={losses['train'].item():.4f}, val loss={losses['val']:.4f}')
 
     # get batches of data
-    xBatch, yBatch = getBatch('train')
+    prompts, xBatch, yBatch = getBatch('train')
 
     # forward pass: evaluate the logits (prediction scores) and the loss (want to minimize this)
-    logits, loss = model(device, xBatch, yBatch)
+    logits, loss = model(device, prompts, xBatch, yBatch)
     
     # backward step
     optimizer.zero_grad(set_to_none=True) # zero out gradients from previous epoch
     loss.backward() # calculate back propagation (gradients (derivative of loss function wrt parameter) for all the parameters)
     optimizer.step() # step (optimize parameters) towards negative of gradient (calculated in the previous step) scaled with learning rate
 
-  # generate from the model
-  context = torch.zeros((1, 1), dtype=torch.long, device=device) # feed the new line character "\n" (0) as the starting sequence/context
-  # write the output to a file
-  with open("output.txt", "w") as file:
-    file.write(lm.decode(model.generate(context, maxNewTokens, blockSize, device)[0].tolist())) # generate from the initial context get the first batch and decode it
-
-   # save language model
-  with open("lm.pkl", "wb") as file:
+  # save language model
+  LMFILE = "lm.pkl"
+  with open(LMFILE, "wb") as file:
     pickle.dump(lm, file)
-  print("Language Model saved to lm.pkl")
-
+  print(f'Language Model saved to {LMFILE}')
+  
   # training data to save
   trainingData = {
     "modelState": model.state_dict(),
+    "maxPromptLength": MAXPROMPTLENGTH,
     "blockSize": blockSize,
     "nEmbed": nEmbed,
     "attentionHeadSize": attentionHeadSize,
@@ -115,7 +136,7 @@ if __name__ == '__main__':
   }
 
   # save to a py torch file
-  FILE = "model.pth"
-  torch.save(trainingData, FILE)
+  MODELFILE = "model.pth"
+  torch.save(trainingData, MODELFILE)
 
-  print(f'Training complete. File saved to {FILE}')
+  print(f'Training complete. File saved to {MODELFILE}')

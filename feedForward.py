@@ -3,7 +3,7 @@ import torch.nn as nn
 class FeedForward(nn.Module):
   """
   A class used to represent a network with a simple linear layer followed by a non-linearity and linear projection (per token level (independently)) 
-    Allows tokens to think/compute on the data gathered from the self-attention (communication between tokens)
+  Allows tokens to think/compute on the data gathered from the self-attention (communication between tokens)
   """
 
   def __init__(self, nSize, dropout):

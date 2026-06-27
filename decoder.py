@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from block import Block
+from decoderBlock import DecoderBlock
+from MultiSequential import MultiSequential
 torch.manual_seed(1337) # set seed for consistency
 
 class Decoder(nn.Module):
@@ -19,8 +20,8 @@ class Decoder(nn.Module):
     self.tokenEmbeddingTable = nn.Embedding(vocabSize, nEmbed) # (vocabSize, C) encode token identity
     # Object representing a look up table of blockSize by nEmbed that stores the nEmbed vectors for all possible token positions (1, 2, ..., blockSize)
     self.positionEmbeddingTable = nn.Embedding(blockSize, nEmbed) # (blockSize, C) encode token position
-    # multiple iteration of self-attention (communication) and feed forward (computation) blocks to intersperse them
-    self.blocks = nn.Sequential(*[Block(headSize, numHeads, nEmbed, dropout, blockSize) for _ in range(numLayers)]) # numLayers * (B, T, nEmbed/headSize) 
+    # multiple iteration of self-attention/cross-attention (communication) and feed forward (computation) blocks to intersperse them
+    self.blocks = MultiSequential(*[DecoderBlock(headSize, numHeads, nEmbed, dropout, blockSize) for _ in range(numLayers)]) # numLayers * (B, T, nEmbed/headSize) 
     # layer norm to normalize (subtract mean divide by std) rows (all features within a single data point in a batch) to N(0, 1) and scale (gamma) and shift (beta) 
     # contrast to batch normalization which normalizes column (singular feature/neuron across batch dimension) to N(0, 1) and scale (gamma) and shift (beta)
     # gamma and beta are learnable parameters, this improves training stability and speed
@@ -31,7 +32,9 @@ class Decoder(nn.Module):
 
   # forward function is implicitly called when the instance (object) is called directly (B, T) -> (B, T, vocabSize)
   # forward pass/evaluation of the model -> contexts is the input, targets is the target output
-  def forward(self, device, contexts, targets=None):
+  # external is the external sources for cross attention inside blocks, if not provided then it will just do a self-attention
+  # encPaddedMask needed for cross attention
+  def forward(self, device, contexts, encPaddedMask, decPaddedMask, targets=None, external=None):
     # B = batch size (compute in parallel)
     # T = time, block size, sequential characters in a context chunk
     # C = channel, nEmbed (=headSize in this case)
@@ -45,10 +48,10 @@ class Decoder(nn.Module):
     tokenEmbedding = self.tokenEmbeddingTable(contexts) # (B, T) -> (B, T, C)
     # get positional embedding by inputting (0, 1, .., T - 1) tensor into the positionEmbeddingTable
     positionEmbedding = self.positionEmbeddingTable(torch.arange(T, device=device)) # (T) -> (T, C)
-    # encode both positional and identity embedding
+    # encode both positional and identity embedding 
     x = tokenEmbedding + positionEmbedding # (B, T, C) + (B (B copies of positionEmbedding automatically added), T, C) = (B, T, C)
     # run the transformer blocks
-    x = self.blocks(x) # (B, T, C) -> (B, T, headSize)
+    x = self.blocks(x, decPaddedMask, encPaddedMask, external) # (B, T, C) -> (B, T, headSize)
     # run the layer norm
     x = self.layerNorm(x) # (B, T, headSize) -> (B, T, headSize)
     # convert headSize (which is C and nEmbed in most cases) dimension to vocabSize dimension to get the logits for all possible next tokens
@@ -70,21 +73,3 @@ class Decoder(nn.Module):
       loss = F.cross_entropy(logits, targets)
 
     return logits, loss
-  
-  # generate maxNewTokens tokens given context tokens contexts (B, T)
-  def generate(self, contexts, maxNewTokens, blockSize, device):
-    seq = contexts # initialize the sequence of tokens with the current context
-    # generate batchSize next tokens in parallel for maxNewTokens tokens
-    for _ in range(maxNewTokens):
-      # crop seq to get last blockSize tokens for the positionEmbeddingTable (otherwise it will run out of scope; it only has embeddings for blockSize)
-      seqBlock = seq[:, -blockSize:] # (B, blockSize, vocabSize)
-      # get the predictions in the form of logits
-      logits, loss = self(device, seqBlock) # call the forward function
-      # get the most recent (last time step) token for all batches
-      lastLogits = logits[:, -1, :] # (B, 1, vocabSize)
-      # convert the logits into probabilities using softmax (logits for each vocabSize -> probability distribution of length vocabSize)
-      probs = F.softmax(lastLogits, dim=-1) # (B, 1, vocabSize)
-      # sample from the probability distribution (of length vocabSize) so we have a sampled next token for each batch
-      nextTokens = torch.multinomial(probs, num_samples=1) # (B, 1)
-      seq = torch.cat((seq, nextTokens), dim=1) # append the next token to the running sequence (B, T+1)
-    return seq # (B, T + maxNewTokens)
