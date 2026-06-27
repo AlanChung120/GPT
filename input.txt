@@ -1,104 +1,1008 @@
-Hi
-<Hi>
-Bye
-<Bye>
-Hi
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
-Hi
-<Hi>
 Bye
 <Bye>
-Hi
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
 <Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
 Bye
 <Goodbye>
+Bye
+<Bye>
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
+<Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
+Bye
+<Goodbye>
+Bye
+<Bye>
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
+<Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
+Bye
+<Goodbye>
+Bye
+<Bye>
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
+<Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
+Bye
+<Goodbye>
+Bye
+<Bye>
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
+<Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
+Bye
+<Goodbye>
+Bye
+<Bye>
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
+<Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
+Bye
+<Goodbye>
+Bye
+<Bye>
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
+<Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
+Bye
+<Goodbye>
+Bye
+<Bye>
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
+<Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
+Bye
+<Goodbye>
+Bye
+<Bye>
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>
+Hello
+<Hello>
+Hello
+<Hey>
+Hello
+<Hi Hi>
+Hello
+<Greetings>
+Hey
+<Hello>
+Hey
+<Hey>
+Hey
+<Hi Hi>
+Hey
+<Greetings>
+Greeting
+<Hello>
+Greeting
+<Hey>
+Greeting
+<Hi Hi>
+Greeting
+<Greetings>
+Goodbye
+<Goodbye>
+Goodbye
+<Bye>
+Goodbye
+<See you>
+Goodbye
+<Peace>
+Bye
+<Goodbye>
+Bye
+<Bye>
+Bye
+<See you>
+Bye
+<Peace>
+See you
+<Goodbye>
+See you
+<Bye>
+See you
+<See you>
+See you
+<Peace>

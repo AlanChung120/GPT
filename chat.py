@@ -47,6 +47,7 @@ if __name__ == '__main__':
 
     encodedPrompt = encodedPrompt.to(device)
 
+    # FOR DEBUG: print(lm.charToInt)
     # generate from the model
     context = torch.tensor([[lm.getBosIndex()]], dtype=torch.long, device=device) # feed the beginning of the sequence token as the starting sequence/context
     response = lm.decode(model.generateUntil(encodedPrompt, context, lm.getEosIndex() , blockSize, device)[0].tolist()[1:-1]) # generate from the initial context get the first batch and decode it

@@ -60,6 +60,7 @@ class Transformer(nn.Module):
       lastLogits = logits[:, -1, :] # (1, 1, vocabSize)
       # convert the logits into probabilities using softmax (logits for each vocabSize -> probability distribution of length vocabSize)
       probs = F.softmax(lastLogits, dim=-1) # (1, 1, vocabSize)
+      # FOR DEBUG: print(seqBlock, probs)
       # sample from the probability distribution (of length vocabSize) so we have a sampled next token for each batch
       nextTokens = torch.multinomial(probs, num_samples=1) # (1, 1)
       seq = torch.cat((seq, nextTokens), dim=1) # append the next token to the running sequence (1, T+1)

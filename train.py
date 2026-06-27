@@ -53,24 +53,24 @@ if __name__ == '__main__':
   BOS = '<'
   EOS = '>'
   # maximum input of encoder length/prompt length
-  MAXPROMPTLENGTH = 4
+  MAXPROMPTLENGTH = 8
   # train in chunks for efficiency
-  batchSize = 4 # independent chunks to process in parallel (GPU efficient)
+  batchSize = 8 # independent chunks to process in parallel (GPU efficient)
   # context-target based chunk training: the chunk contains information for every element in the chunk,
   # that element can act as a target and everything preceding can act as the context. So it contains each
   # element's positional information (context (as low as one characater) -> target)
   # Allow the model to see many different context sizes
-  blockSize = 2 # maximum context length (chunk length) (that the model will be used to)
-  epochs = 60000
+  blockSize = 4 # maximum context length (chunk length) (that the model will be used to)
+  epochs = 5000
   printInterval = 1000
-  learningRate = 3e-5 # bigger the neural network the lower
+  learningRate = 3e-4 # bigger the neural network the lower
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-  estimateIters = 100 # number of iterations to calculate mean loss to estimate loss
-  nEmbed = 4 # embedding dimensions (intermediate step)
+  estimateIters = 200 # number of iterations to calculate mean loss to estimate loss
+  nEmbed = 48 # embedding dimensions (intermediate step)
   # should be equal to nEmbed to execute multiple iteration of blocks (output of self-attention back into input)
   attentionHeadSize = nEmbed # head size for one head of self-attention (attentionHeadSize % attentionNumHeads == 0)
-  attentionNumHeads = 4 # number of self-attention heads to run in parallel
-  numLayers = 2 # number of block layers
+  attentionNumHeads = 6 # number of self-attention heads to run in parallel
+  numLayers = 6 # number of block layers
   dropout = 0.2 # dropout rate
 
   # read in the file
